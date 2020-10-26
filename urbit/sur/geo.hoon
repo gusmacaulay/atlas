@@ -1,11 +1,16 @@
 |%
 :: coord is the basic coordinate the underpins all geometries
-:: is there a cost to having lat,lon variables rather than unnamed pair?
-+$  coord  [lat=@rd lon=@rd]
+:: lon,lat order! (GeoJSON standard)
+:: is there a cost to having lon,lat variables rather than unnamed pair?
+:: TODO: what is the precision required by GeoJSON formate
+:: TODO: variable precision? ala postgis etc.
++$  coord  [lon=@rd lat=@rd]
+::  just for fun, the spatial equivalent of a loobean
++$  drooc  [lat=@rd lon=@rd]
 +$  title     @t
 +$  id  @ud
 
-:: point is a geomtry, consists of coord + and id
+:: point is a geometry, consists of coord + and id
 +$  point
   $:  geom=coord
       =id
@@ -28,25 +33,24 @@
   $:  geom=(list linestring)
       =id
   ==
-:: any geometry type, and also higher level type?
+:: generic geometry type
+:: TODO: figure out how this should work in hoon
+:: will have implications for
 +$  geometry
   $:  =id
-  ==
   :: TODO: figure out how this should work
-+$  multigeometry
-  $:  geom=(list geometry)
-      =id
   ==
-:: Geometry collection is a GeoJSON type
-:: looks the same as multigeometry so may be uneccesary as a type,
-:: perhaps just something that comes out of JSON printing/writing
+::
 +$  geometrycollection
   $:  =id
       geom=(list geometry)
   ==
-:: GeoJSON Feature
+:: GeoJSON Feature Type
+:: A geometry with properties (key:value pairs)
+:: and a title and id
 +$  feature
   $:  =id
+      =title
       :: properties= optional map ::??
       :: =geometry :: Generic geometry
   ==
@@ -55,10 +59,13 @@
       features=(list feature) ::?? check geojson, might be a key value thing
   ==
 :: Container for GeoJSON objects
+:: This should map closely a GeoJSON document, which is either a ..
+:: geometrycollection or a feature collection
 +$  document
   $:  =id
       =title
       owner=@p
+      :: bbox, optional
       ::list geometrycollection or featurecollection
   ==
 :: Portal is a set of GeoJSON documents, probably a whole lot of other stuff too
