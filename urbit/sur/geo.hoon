@@ -10,28 +10,40 @@
 +$  title     @t
 +$  id  @ud
 
-:: point is a geometry, consists of coord + and id
+:: point is a geometry, consists of coord
+::
 +$  point
   $:  =coord
-      =id
   ==
 :: is there an array structure more compact/efficient than list?
 +$  linestring
-  $:  points=(list coord)
-      =id
+  $:  =(list coord)
   ==
-:: hmm without validation etc. a polygon is actually the same thing as a line?
+
+:: a linear ring is the building block of a polygon
+:: a ring differs from a linestring, partly for conceptual/syntactic reasons
+:: and also because in geojson and some other formats the last coord and first
+:: of a ring are the same - although we don't need to store this redundant
+:: coordinate only take it into account when rendering/parsing.
+:: See macwright.org for a nice summary
++$  linearring
+  $:  =(list coord)
+  ==
+::
+:: A polygon is a list of rings - the first list is the "outer" ring
+:: and the subsequent lists are the "inner rings" (donut holes)
 +$  polygon
-  $:  ring=(list coord)
-      =id
+  $:  =(list linearring)
   ==
+::
+:: A multipoint is a list of poins
 +$  multipoint
-  $:  points=(list coord)
-      =id
+  $:  =(list point)
   ==
+::
+:: A multilinestring is a list of lines
 +$  multilinestring
-  $:  lines=(list linestring)
-      =id
+  $:  =(list linestring)
   ==
 :: generic geometry type
 :: TODO: figure out how this should work in hoon
