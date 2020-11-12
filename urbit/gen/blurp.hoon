@@ -5,4 +5,5 @@
 |=  c=[@rd @rd]
 ::=/  p  `point`c
 =/  g  [%point c]
-`geometry`g
+=/  m  (my ~[[%cheese 'camambert']])
+`feature`[g m]

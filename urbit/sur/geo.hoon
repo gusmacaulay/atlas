@@ -9,7 +9,7 @@
 +$  drooc  [lat=@rd lon=@rd]
 +$  title     @t
 +$  id  @ud
-
+::+$  properties
 ::  point is a geometry, consists of coord
 ::
 +$  point
@@ -72,10 +72,8 @@
 ::  A geometry with properties (key:value pairs)
 ::  and a title and id
 +$  feature
-  $:  =id
-      =title
-      :: properties= optional map ::??
-      :: =geometry :: Generic geometry
+  $:  =geometry :: Generic geometry
+      properties=(map @tas @) ::optional?? restrict values to json types?
   ==
 +$  featurecollection
   $:  =id
