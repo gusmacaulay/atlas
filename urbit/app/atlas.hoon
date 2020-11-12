@@ -8,7 +8,7 @@
 +$  versioned-state
   $%  state-zero
   ==
-+$  state-zero  [%0 data=geometry]
++$  state-zero  [%0 data=featurecollection]
 --
 =|  state-zero
 =*  state  -
