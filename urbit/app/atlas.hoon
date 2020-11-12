@@ -1,4 +1,4 @@
-/-  geo
+/-  *geo
 /+  *server, default-agent, dbug
 ::
 |%
@@ -6,7 +6,7 @@
 +$  versioned-state
   $%  state-zero
   ==
-+$  state-zero  [%0 data=json]
++$  state-zero  [%0 data=geometry]
 --
 =|  state-zero
 =*  state  -
@@ -35,7 +35,7 @@
 ::    `this
 ::  ?.  =(/ path)
   :_  this
-  [%give %fact ~ %json !>(data)]~
+  [%give %fact ~ %point !>(data)]~
 ::
 ++  on-agent  on-agent:def
 ::
@@ -49,11 +49,13 @@
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
-  ~&  'on poke!'
+  ~&  'on poke!!'
+  ::~&  data
   =^  cards  state
     ?+    mark  (on-poke:def mark vase)
-        %json
-      (poke-json:cc !<(json vase))
+        %geometry
+      ~&  'point says'
+      (poke-point:cc !<(geometry vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -68,13 +70,24 @@
 ::
 |_  bol=bowl:gall
 ::
-++  poke-json
-  |=  jon=json
+++  poke-point
+  |=  pon=geometry
   ^-  (quip card _state)
-  ~&  'in poke-json'
-  ~&  jon
-  :-  [%give %fact ~[/atlas] %json !>(jon)]~
+  ~&  'in poke-point (geom)'
+  ~&  data
+  :-  [%give %fact ~[/atlas] %geometry !>(pon)]~
   %=  state
-    data  jon
+    data  pon
   ==
 --
+::
+::++  poke-json
+::  |=  jon=json
+::  ^-  (quip card _state)
+::  ~&  'in poke-json'
+::  ~&  jon
+::  :-  [%give %fact ~[/atlas] %json !>(jon)]~
+::  %=  state
+::    data  jon
+::  ==
+::--
