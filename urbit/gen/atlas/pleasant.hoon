@@ -4,7 +4,7 @@
 :-  %say
 |=  *
 ::[* [~] ~]
-~&  'pleasant printer'
+~&  'pleasantly printing your atlas store ...'
 [%pleasant ~]
 ::=/  g  `geometry`[%point c]
 ::~&  g

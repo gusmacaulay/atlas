@@ -5,8 +5,6 @@
 :-  %say
 ::  need to wrap generator input with %say *stuff*,
 ::  the coords are all I care about
-|=  [* [c=[@rd @rd] ~] ~]
-::=/  p  `point`c
-=/  g  `geometry`[%point c]
-~&  g
-[%geometry g]
+|=  [* [f=feature ~] ~]
+~&  f
+[%feature f]

@@ -76,8 +76,7 @@
       properties=(map @tas @) ::optional?? restrict values to json types?
   ==
 +$  featurecollection
-  $:  =id
-      features=(list feature) ::?? check geojson, might be a key value thing
+  $:  =(list feature) ::?? check geojson, might be a key value thing
   ==
 ::  Container for GeoJSON objects
 ::  This should map closely a GeoJSON document, which is either a ..

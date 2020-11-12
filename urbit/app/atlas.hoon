@@ -8,7 +8,7 @@
 +$  versioned-state
   $%  state-zero
   ==
-+$  state-zero  [%0 data=geometry]
++$  state-zero  [%0 data=(list feature)]
 --
 =|  state-zero
 =*  state  -
@@ -51,15 +51,11 @@
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
-  ~&  'on poke!!!'
-  ::~&  data
   =^  cards  state
     ?+    mark  (on-poke:def mark vase)
-        %geometry
-      ~&  'point says'
-      (poke-geom:cc !<(geometry vase))
+        %feature
+      (poke-feature:cc !<(feature vase))
         %pleasant
-      ~&  'pleasant printer!'
       (poke-pleasant:cc !<(~ vase))
     ==
   [cards this]
@@ -75,29 +71,36 @@
 ::
 |_  bol=bowl:gall
 ::
+::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
+::  A pleasant printer is like a pretty printer but calm
 ++  poke-pleasant
   |=  *
-  ~&  'more pleasant'
-  ~&  data
-  ~
-::  |=  g=geometry
-::  ^-  (quip card _state)
-::  ~&  'pleasant to the max!'
-::  :-  [%give %fact ~[/atlas] %geometry !>(g)]~
-::  %=  state
-::    data  geometry
-::  ==
-::
-++  poke-geom
-  |=  pon=geometry
   ^-  (quip card _state)
-  ~&  'in poke-point (geom)'
   ~&  data
-  :-  [%give %fact ~[/atlas] %geometry !>(pon)]~
+  [~ state]
+::
+::  Poke feature, adds a feature to our featurecollection (the store, for now)
+++  poke-feature
+  |=  f=feature
+  ^-  (quip card _state)
+  =/  features  (weld data ~[f])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
-    data  pon
+    data  features
   ==
 --
+::
+::  Poke geom deprecated
+::++  poke-geom
+::  |=  g=geometry
+::  ^-  (quip card _state)
+::  ~&  'in poke-geom (geom)'
+::  ~&  data
+::  :-  [%give %fact ~[/atlas] %geometry !>(g)]~
+::  %=  state
+::    data  g
+::  ==
+::--
 ::
 ::++  poke-json
 ::  |=  jon=json
