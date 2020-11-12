@@ -3,6 +3,8 @@
 ::
 |%
 +$  card  card:agent:gall
+::  the lack of proper state management means each update resets the store
+::  this results in default geometry which is apparently a multipolygon!?
 +$  versioned-state
   $%  state-zero
   ==
@@ -49,13 +51,16 @@
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
-  ~&  'on poke!!'
+  ~&  'on poke!!!'
   ::~&  data
   =^  cards  state
     ?+    mark  (on-poke:def mark vase)
         %geometry
       ~&  'point says'
-      (poke-point:cc !<(geometry vase))
+      (poke-geom:cc !<(geometry vase))
+        %pleasant
+      ~&  'pleasant printer!'
+      (poke-pleasant:cc !<(~ vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -70,7 +75,20 @@
 ::
 |_  bol=bowl:gall
 ::
-++  poke-point
+++  poke-pleasant
+  |=  *
+  ~&  'more pleasant'
+  ~&  data
+  ~
+::  |=  g=geometry
+::  ^-  (quip card _state)
+::  ~&  'pleasant to the max!'
+::  :-  [%give %fact ~[/atlas] %geometry !>(g)]~
+::  %=  state
+::    data  geometry
+::  ==
+::
+++  poke-geom
   |=  pon=geometry
   ^-  (quip card _state)
   ~&  'in poke-point (geom)'
