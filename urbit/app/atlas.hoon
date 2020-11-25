@@ -1,5 +1,6 @@
 /-  *geo
 /+  *server, default-agent, dbug
+=,  format
 ::
 |%
 +$  card  card:agent:gall
@@ -32,7 +33,7 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ~&  'any on-watch '
+  ~&  'an on-watch '
 ::  ?:  ?=([%http-response *] path)
 ::    `this
 ::  ?.  =(/ path)
@@ -76,8 +77,38 @@
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
-  ~&  data
+  =/  jd  (geojson-featurecollection data)
+  ::(crip (en-json:html (pairs:enjs:format ['key' s+'pre-shared'] ['hash' s+(scot %uv eny)] ~)))
+  =/  jason  (en-json:html jd)
+    ~&  jason
   [~ state]
+::
+++  geojson-featurecollection
+  |=  fc=(list feature)
+  ^-  json
+  =/  fcj  [%a ?~(fc ~ (turn fc geojson-feature))]
+  ~&  fcj
+  (frond:enjs ['featurecollection' fcj])
+::
+++  geojson-feature
+  |=  f=feature
+  ^-  json
+  ~&  f
+  =/  c  ~[.~39 .~-140]
+  =/  jc  [%a (turn c anynumb)]
+  =/  jg  (frond:enjs ['point' jc])
+  ::=/  jf  (frond:enjs ['feature' jg])
+  (frond:enjs ['feature' jg])
+::
+++  anynumb
+  |=  a/@r
+  ^-  json
+  :-  %n
+  ?:  =(0 a)  '0'
+  %-  crip
+  %-  flop
+  |-  ^-  ^tape
+  ?:(=(0 a) ~ [(add '0' (mod a 10)) $(a (div a 10))])
 ::
 ::  Poke feature, adds a feature to our featurecollection (the store, for now)
 ++  poke-feature

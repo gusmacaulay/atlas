@@ -62,6 +62,7 @@
       [%multipolygon geom=multipolygon]
   ==
 ::
+::
 ::  Geometrycollection for GeoJSON
 ::  TODO: check if id is needed here
 +$  geometrycollection
