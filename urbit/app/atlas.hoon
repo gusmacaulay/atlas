@@ -1,6 +1,6 @@
 /-  *geo
 /+  *server, default-agent, dbug
-=,  format
+=,  dejs:format
 ::
 |%
 +$  card  card:agent:gall
@@ -58,6 +58,8 @@
       (poke-feature:cc !<(feature vase))
         %pleasant
       (poke-pleasant:cc !<(~ vase))
+        %geojson
+      (poke-geojson-create:cc !<(@t vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -72,6 +74,8 @@
 ::
 |_  bol=bowl:gall
 ::
+::
+
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
 ++  poke-pleasant
@@ -109,6 +113,36 @@
   %-  flop
   |-  ^-  ^tape
   ?:(=(0 a) ~ [(add '0' (mod a 10)) $(a (div a 10))])
+::
+++  poke-geojson-create
+  |=  gj=@t
+  ^-  (quip card _state)
+  ~&  'geojson create'
+  ::  de-json:html wraps in ~ for some reason
+  ::  this seems kludgy somehow --> TODO: should be a 'need' I think
+  =/  unwrap  +3:(de-json:html gj)
+  =/  feature  (degjs unwrap)
+  ~&  feature
+  ::=/  features  (weld data ~[feature])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  %=  state
+    data  features
+  ==
+  ::?:  =(%o +2:unwrap)
+  ::  ~&  'json object'
+  ::  =/  jason  (degjs unwrap)
+  ::    ~&  jason
+  ::[~ state]
+::
+++  degjs
+  %-  ot
+::  :~  [%properties (om so)]
+::      [%type so]
+::      [%geometry (ot ([%type so]))]
+  :~  'properties'^(om so)
+      ::'geometry'^(ot 'type'^so 'coordinates'^(at ne))
+      'geometry'^(ot 'type'^so 'coordinates'^(at ~[ne ne]) ~)
+  ==
 ::
 ::  Poke feature, adds a feature to our featurecollection (the store, for now)
 ++  poke-feature
