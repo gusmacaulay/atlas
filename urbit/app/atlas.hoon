@@ -118,12 +118,16 @@
   |=  gj=@t
   ^-  (quip card _state)
   ~&  'geojson create'
-  ::  de-json:html wraps in ~ for some reason
-  ::  this seems kludgy somehow --> TODO: should be a 'need' I think
-  =/  unwrap  +3:(de-json:html gj)
-  =/  feature  (degjs unwrap)
+  ::  de-json:html returns a unit, so use 'need' to get past ~
+  =/  intermediate  (degjs (need (de-json:html gj)))
+  ~&  intermediate
+  =/  geometry  (geometry %point (coord +3:intermediate))
+  ~&  geometry
+  =/  properties  +2:intermediate
+  ~&  properties
+  =/  feature  (feature geometry properties)
   ~&  feature
-  ::=/  features  (weld data ~[feature])
+  =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
     data  features
@@ -140,8 +144,9 @@
 ::      [%type so]
 ::      [%geometry (ot ([%type so]))]
   :~  'properties'^(om so)
+      'geometry'^(ot 'coordinates'^(at ~[ne ne]) ~)
       ::'geometry'^(ot 'type'^so 'coordinates'^(at ne))
-      'geometry'^(ot 'type'^so 'coordinates'^(at ~[ne ne]) ~)
+      ::'geometry'^(ot 'type'^so 'coordinates'^(at ~[ne ne]) ~)
   ==
 ::
 ::  Poke feature, adds a feature to our featurecollection (the store, for now)
