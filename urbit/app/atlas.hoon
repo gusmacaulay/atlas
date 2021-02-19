@@ -117,37 +117,57 @@
 ++  poke-geojson-create
   |=  gj=@t
   ^-  (quip card _state)
-  ~&  'geojson create'
+  ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  intermediate  (degjs (need (de-json:html gj)))
   ~&  intermediate
-  =/  geometry  (geometry %point (coord +3:intermediate))
-  ~&  geometry
-  =/  properties  +2:intermediate
-  ~&  properties
-  =/  feature  (feature geometry properties)
+  ::=/  intermediate=[props=(map @t @t) =coord]
+  ::=/  geometry  (geometry %point (coord +2:intermediate))
+
+  ::=/  geometry  +2:intermediate
+  ::~&  geometry
+  ::=/  properties  +3:intermediate
+  ::~&  properties
+  ::=/  feature  (feature geometry properties)
+  =/  feature  (feature intermediate)
   ~&  feature
   =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
     data  features
   ==
-  ::?:  =(%o +2:unwrap)
-  ::  ~&  'json object'
-  ::  =/  jason  (degjs unwrap)
-  ::    ~&  jason
-  ::[~ state]
 ::
 ++  degjs
-  %-  ot
-::  :~  [%properties (om so)]
-::      [%type so]
-::      [%geometry (ot ([%type so]))]
-  :~  'properties'^(om so)
-      'geometry'^(ot 'coordinates'^(at ~[ne ne]) ~)
-      ::'geometry'^(ot 'type'^so 'coordinates'^(at ne))
-      ::'geometry'^(ot 'type'^so 'coordinates'^(at ~[ne ne]) ~)
+%-  ot
+  :~  [%geometry dejs-geometry]
+      [%properties (om so)]
   ==
+::
+++  dejs-geometry
+  =,  dejs:format
+  |=  =json
+  ^-  geometry
+  ?>  ?=([%o *] json)
+  =/  typ=@t  (so (~(got by p.json) 'type'))
+  ?+  typ  ~|([%unknown-geometry typ] !!)
+      %'Point'
+    :-  %point
+    %-  (at ~[ne ne])
+    (~(got by p.json) 'coordinates')
+  ==
+::
+++  dejs-geometry-alt
+  |=  =json
+  ^-  geometry
+  ~&  'point json'
+  ~&  json
+  =/  jsmap  +3:json
+  =/  p  p.jsmap
+  ~&  p
+  ::~&  (~(got by json) 'coordinates')
+  (geometry (point json))
+  ::
+  ::(geometry (point ~(got by json) 'coordinates'))
 ::
 ::  Poke feature, adds a feature to our featurecollection (the store, for now)
 ++  poke-feature
