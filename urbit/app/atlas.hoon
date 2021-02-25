@@ -119,17 +119,8 @@
   ^-  (quip card _state)
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
-  =/  intermediate  (degjs (need (de-json:html gj)))
-  ~&  intermediate
-  ::=/  intermediate=[props=(map @t @t) =coord]
-  ::=/  geometry  (geometry %point (coord +2:intermediate))
+  =/  feature  (feature (degjs (need (de-json:html gj))))
 
-  ::=/  geometry  +2:intermediate
-  ::~&  geometry
-  ::=/  properties  +3:intermediate
-  ::~&  properties
-  ::=/  feature  (feature geometry properties)
-  =/  feature  (feature intermediate)
   ~&  feature
   =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
@@ -148,13 +139,46 @@
   |=  =json
   ^-  geometry
   ?>  ?=([%o *] json)
+  ~&  '====='
+  ~&  json
+  ::~&  (~(got by p.json) 'coordinates')
+  ::~&  (dejs-linestring json)
+  ~&  '====='
   =/  typ=@t  (so (~(got by p.json) 'type'))
   ?+  typ  ~|([%unknown-geometry typ] !!)
-      %'Point'
-    :-  %point
-    %-  (at ~[ne ne])
-    (~(got by p.json) 'coordinates')
+      %'Polygon'  (dejs-polygon json)
+      %'Point'  (dejs-point json)
+      %'LineString'  (dejs-linestring json)
   ==
+::
+++  dejs-coord
+  (at ~[ne ne])
+::
+++  dejs-linestring
+  |=  =json
+  ^-  geometry
+  :-  %linestring
+  ?>  ?=([%o *] json)
+  %-  (ar dejs-coord)
+  (~(got by p.json) 'coordinates')
+  ::(turn p.(~(got by p.json) 'coordinates') dejs-coord)
+::
+++  dejs-point
+  |=  =json
+  ::^-  geometry
+  :-  %point
+  ?>  ?=([%o *] json)
+  %-  dejs-coord
+  (~(got by p.json) 'coordinates')
+::
+++  dejs-polygon
+  |=  =json
+  ^-  geometry
+  :-  %polygon
+  ?>  ?=([%o *] json)
+  ::~&  p.json
+  %-  (ar (ar dejs-coord))
+  (~(got by p.json) 'coordinates')
 ::
 ++  dejs-geometry-alt
   |=  =json
