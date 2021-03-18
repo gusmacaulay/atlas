@@ -74,7 +74,7 @@
 ::  and a title and id
 +$  feature
   $:  =geometry :: Generic geometry
-      properties=(map @tas @tas) ::optional?? allow non text types?
+      ::properties=(map @tas @tas) ::optional?? allow non text types?
   ==
 +$  featurecollection
   $:  =(list feature) ::?? check geojson, might be a key value thing

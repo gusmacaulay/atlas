@@ -4,8 +4,7 @@
 ::
 |%
 +$  card  card:agent:gall
-::  the lack of proper state management means each update resets the store
-::  this results in default geometry which is apparently a multipolygon!?
+
 +$  versioned-state
   $%  state-zero
   ==
@@ -37,8 +36,11 @@
 ::  ?:  ?=([%http-response *] path)
 ::    `this
 ::  ?.  =(/ path)
+  =/  jd  (geojson-featurecollection data)
+  =/  jason  (en-json:html jd)
+  ~&  jason
   :_  this
-  [%give %fact ~ %point !>(data)]~
+  [%give %fact ~ %json !>(jason)]~
 ::
 ++  on-agent  on-agent:def
 ::
@@ -60,6 +62,10 @@
       (poke-pleasant:cc !<(~ vase))
         %geojson
       (poke-geojson-create:cc !<(@t vase))
+        %json
+      (poke-json-create:cc !<(json vase))
+        %delete
+      (poke-delete:cc !<(~ vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -87,32 +93,69 @@
     ~&  jason
   [~ state]
 ::
+::  Delete operation, removes feature from the store
+++  poke-delete
+  |=  *
+  ^-  (quip card _state)
+  =/  features  (oust [0 1] data)
+  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  %=  state
+    data  features
+  ==
+::
 ++  geojson-featurecollection
   |=  fc=(list feature)
   ^-  json
+  =/  count  (lent fc)
+  ~&  'There are'  ~&  count  ~&  'features in the store'
   =/  fcj  [%a ?~(fc ~ (turn fc geojson-feature))]
-  ~&  fcj
+  ::~&  fcj
   (frond:enjs ['featurecollection' fcj])
 ::
 ++  geojson-feature
   |=  f=feature
   ^-  json
-  ~&  f
+  ~&  geometry.f
   =/  c  ~[.~39 .~-140]
   =/  jc  [%a (turn c anynumb)]
   =/  jg  (frond:enjs ['point' jc])
-  ::=/  jf  (frond:enjs ['feature' jg])
   (frond:enjs ['feature' jg])
+  ::=/  jf  (frond:enjs ['feature' jg])
 ::
+::++  geojson-geom
+::  |=  g=geometry
+  ::^-  json
+  ::?=([%polygon *] g)
+  ::  geojson-polygon g
+  ::?=([%point *] g)
+  ::    (geojson-polygon g)
+  ::?=([%linestring *] g)
+  ::    (geojson-polygon g)
+  ::==
+::
+
 ++  anynumb
-  |=  a/@r
+  |=  a/@rd
   ^-  json
   :-  %n
-  ?:  =(0 a)  '0'
+  ::?:  =(0 a)  '0'
   %-  crip
   %-  flop
   |-  ^-  ^tape
-  ?:(=(0 a) ~ [(add '0' (mod a 10)) $(a (div a 10))])
+  ::?:(=(0 a) ~ [(add '0' (mod a 10)) $(a (div a 10))])
+  (slag 2 (scow %rd a))
+::
+++  poke-json-create
+  |=  gj=json
+  ~&  'poke json create'
+  ~&  gj
+  =/  feature  (feature (degjs gj))
+  ~&  feature
+  =/  features  (weld data ~[feature])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  %=  state
+    data  features
+  ==
 ::
 ++  poke-geojson-create
   |=  gj=@t
@@ -120,7 +163,6 @@
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  feature  (feature (degjs (need (de-json:html gj))))
-
   ~&  feature
   =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
@@ -131,7 +173,7 @@
 ++  degjs
 %-  ot
   :~  [%geometry dejs-geometry]
-      [%properties (om so)]
+      ::[%properties (om so)] :: need to make properties optional/null
   ==
 ::
 ++  dejs-geometry
