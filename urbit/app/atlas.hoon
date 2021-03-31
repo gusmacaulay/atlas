@@ -110,19 +110,27 @@
   |=  fc=(list feature)
   ^-  json
   =/  count  (lent fc)
-  ~&  'There are'  ~&  count  ~&  'features in the store'
+  ::~&  'There are'  ~&  count  ~&  'features in the store'
   =/  fcj  [%a ?~(fc ~ (turn fc geojson-feature))]
   ::~&  fcj
-  (frond:enjs ['featurecollection' fcj])
+  =/  gjtype  (tape:enjs "FeatureCollection")
+  ::[(frond:enjs ['type' gjtype]) (frond:enjs ['features' fcj]) ~])
+  ::(pairs:enjs `(list [@t json])`[["type" gjtype] ["features" fcj] ~])
+  ::`(list [@t json])` ([["type" gjtype] ["features" fcj] ~])
+  =/  gjobj  (pairs:enjs ~[[%type gjtype] [%features fcj]])
+  ~&  gjobj
+  gjobj
 ::
 ++  geojson-feature
   |=  f=feature
   ^-  json
   ~&  geometry.f
-  =/  jc  (geojson-geom geometry.f)
-  =/  jg  (frond:enjs ['coordinates' jc]) ::frond:enjs ['type' 'point']]
-  (frond:enjs ['feature' jg])
-  ::=/  jf  (frond:enjs ['feature' jg])
+  =/  jg  (geojson-geom geometry.f)
+  =/  gjtype  (tape:enjs "Feature")
+ ::frond:enjs ['type' 'point']]
+  ::(frond:enjs ['geometry' jg])
+  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg]])
+  jf
 ::
 ++  geojson-geom
   |=  g=geometry
@@ -134,11 +142,12 @@
   ::?=([%linestring *] g)
   ::    (geojson-linestring g)
   ::==
+  =/  gjtype  (tape:enjs "Point")
   =/  c  (coord geom.+3.g)
-  ~&  c
-  =/  p   [.~1 .~1]
-  =/  jp  (geojson-point c)
-  jp
+  =/  jc  (geojson-point c)
+  ::=/  jp  (frond:enjs ['coordinates' jc]
+  =/  gj  (pairs:enjs ~[[%coordinates jc] [%type gjtype]])
+  gj
 ::
 ++  geojson-point
   |=  p=coord
