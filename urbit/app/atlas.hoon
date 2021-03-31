@@ -38,9 +38,12 @@
 ::  ?.  =(/ path)
   =/  jd  (geojson-featurecollection data)
   =/  jason  (en-json:html jd)
+  ~&  'JSON unrendered'
+  ~&  jd
+  ~&  'JSON rendered??'
   ~&  jason
   :_  this
-  [%give %fact ~ %json !>(jason)]~
+  [%give %fact ~ %json !>(jd)]~
 ::
 ++  on-agent  on-agent:def
 ::
@@ -116,34 +119,46 @@
   |=  f=feature
   ^-  json
   ~&  geometry.f
-  =/  c  ~[.~39 .~-140]
-  =/  jc  [%a (turn c anynumb)]
-  =/  jg  (frond:enjs ['point' jc])
+  =/  jc  (geojson-geom geometry.f)
+  =/  jg  (frond:enjs ['coordinates' jc]) ::frond:enjs ['type' 'point']]
   (frond:enjs ['feature' jg])
   ::=/  jf  (frond:enjs ['feature' jg])
 ::
-::++  geojson-geom
-::  |=  g=geometry
-  ::^-  json
-  ::?=([%polygon *] g)
-  ::  geojson-polygon g
+++  geojson-geom
+  |=  g=geometry
+  ^-  json
+::  ?=([%polygon *] g)
+    ::geojson-polygon g
   ::?=([%point *] g)
-  ::    (geojson-polygon g)
+  ::    (geojson-point point.g)
   ::?=([%linestring *] g)
-  ::    (geojson-polygon g)
+  ::    (geojson-linestring g)
   ::==
+  =/  c  (coord geom.+3.g)
+  ~&  c
+  =/  p   [.~1 .~1]
+  =/  jp  (geojson-point c)
+  jp
 ::
-
+++  geojson-point
+  |=  p=coord
+  ^-  json
+  ~&  ~[(anynumb lon.p) (anynumb lat.p)]
+  =/  c  ~[lon.p lat.p]
+  =/  ca  (turn c anynumb)
+  ~&  ca
+  =/  jc  [%a ca]
+  jc
+::
+:: How does any of this work?! what does it mean!!
 ++  anynumb
   |=  a/@rd
   ^-  json
   :-  %n
-  ::?:  =(0 a)  '0'
   %-  crip
-  %-  flop
   |-  ^-  ^tape
-  ::?:(=(0 a) ~ [(add '0' (mod a 10)) $(a (div a 10))])
   (slag 2 (scow %rd a))
+
 ::
 ++  poke-json-create
   |=  gj=json
@@ -207,7 +222,7 @@
 ::
 ++  dejs-point
   |=  =json
-  ::^-  geometry
+  ^-  geometry
   :-  %point
   ?>  ?=([%o *] json)
   %-  dejs-coord
