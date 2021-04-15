@@ -33,9 +33,10 @@
   |=  =path
   ^-  (quip card _this)
   ~&  'an on-watch '
-::  ?:  ?=([%http-response *] path)
-::    `this
-::  ?.  =(/ path)
+  :: Do Not Remove the %sole condition - will break fresh installs only!!
+  ?.  =([%sole @ ~] path)
+    (on-watch:def path)
+  :: I Repeat Do not remove the %sole condition!
   =/  jd  (geojson-featurecollection data)
   =/  jason  (en-json:html jd)
   ~&  'JSON unrendered'
