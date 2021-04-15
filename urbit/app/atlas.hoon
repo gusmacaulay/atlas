@@ -161,7 +161,7 @@
 ::
 :: How does any of this work?! what does it mean!!
 ++  anynumb
-  |=  a/@rd
+  |=  a=@rd
   ^-  json
   :-  %n
   %-  crip
