@@ -1,5 +1,6 @@
 ::  pleasant printer for atlas store.
 ::  pleasant is like pretty but more calm
+::  usage; ```:atlas|pleasant```
 /-  *geo
 :-  %say
 |=  *
