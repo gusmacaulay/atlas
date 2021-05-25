@@ -95,7 +95,7 @@ class OLMapFragment extends React.Component {
       alert('poking');
       window.api.poke({
         app: 'atlas',
-        mark: 'json',
+        mark: 'update', // was 'json'
         json: gj
       });
       // refresh subscription?? and re-render

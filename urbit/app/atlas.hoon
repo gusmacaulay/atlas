@@ -75,6 +75,8 @@
       (poke-json-create:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
+        %update
+      (poke-update:cc !<(json vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -108,6 +110,19 @@
   ^-  (quip card _state)
   =/  features  (oust [0 1] data)
   ~&  'deleted one item from data'
+  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  %=  state
+    data  features
+  ==
+::
+::  Update Operation, deletes and replaces document with input GeoJSON
+++  poke-update
+  |=  gj=json
+  ~&  'poke update'
+  ~&  gj
+  =/  feature  (feature (degjs gj))
+  ~&  feature
+  =/  features  ~[feature]
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
     data  features
