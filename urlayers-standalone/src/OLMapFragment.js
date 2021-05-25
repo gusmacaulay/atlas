@@ -7,7 +7,7 @@ import { GeoJSON } from 'ol/format';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource, XYZ as XYZSource } from 'ol/source';
 // import { Select as SelectInteraction, defaults as DefaultInteractions } from 'ol/interaction';
-import { ScaleLine, ZoomSlider, MousePosition, OverviewMap, defaults as DefaultControls } from 'ol/control';
+import { ScaleLine, ZoomSlider, MousePosition, OverviewMap, defaults as DefaultControls, Control } from 'ol/control';
 import { defaults as defaultInteractions, DragRotateAndZoom } from 'ol/interaction';
 import { Style, Fill, Stroke as Stroke, Circle as CircleStyle } from 'ol/style';
 
@@ -99,16 +99,54 @@ class OLMapFragment extends React.Component {
         json: gj
       });
       // refresh subscription?? and re-render
-      if (window.features != null) { // eslint-disable-line no-undef
+       if (window.features != null) { // eslint-disable-line no-undef
         alert('update map features  ');
         const format = new GeoJSON();
         const urFeatures = format.readFeatures(window.features);
+        window.vector.getSource().clear();
         window.vector.getSource().addFeatures(urFeatures);
-      } else {
+       } else {
         alert('in draw with window.features null');
-      }
+       }
     });
+     // Custom Control Example
+     const RotateNorthControl = (function (Control) { // eslint-disable-line wrap-iife
+       function RotateNorthControl(optOptions) {
+         const options = optOptions || {};
 
+         const button = document.createElement('button');
+         button.innerHTML = 'D';
+
+         const element = document.createElement('div');
+         element.className = 'rotate-north ol-unselectable ol-control';
+         element.appendChild(button);
+
+         Control.call(this, {
+           element: element,
+           target: options.target
+         });
+
+         button.addEventListener('click', this.deleteFeature.bind(this), false);
+       }
+
+       if ( Control )
+        RotateNorthControl.__proto__ = Control;
+       RotateNorthControl.prototype = Object.create( Control && Control.prototype );
+       RotateNorthControl.prototype.constructor = RotateNorthControl;
+
+       RotateNorthControl.prototype.deleteFeature = function deleteFeature () {
+         // this.getMap().getView().setRotation(0);
+         alert('DELETE!');
+         window.api.poke({
+           app: 'atlas',
+           mark: 'delete',
+           json: {}
+         });
+       };
+
+       return RotateNorthControl;
+     }(Control));
+     // End Custom Control Example
      window.map = new Map({
       //  Display the map in the div with the id of map
       target: 'map',
@@ -126,8 +164,8 @@ class OLMapFragment extends React.Component {
         new ZoomSlider(),
         new MousePosition(),
         new ScaleLine(),
-        new OverviewMap()
-        // new RotateNorthControl()
+        new OverviewMap(),
+        new RotateNorthControl()
       ]),
       interactions: defaultInteractions().extend([
         new DragRotateAndZoom(),
@@ -148,14 +186,15 @@ class OLMapFragment extends React.Component {
     });
     window.map.once('rendercomplete', function(event) { // eslint-disable-line prefer-arrow-callback
       // alert('render complete event');
-      if (window.features != null) { // eslint-disable-line no-undef
-        alert('in rendercomplete and we have features');
-        const format = new GeoJSON();
-        const urFeatures = format.readFeatures(window.features);
-        window.vector.getSource().addFeatures(urFeatures);
-      } else {
-        alert('in rendercomplete but features null');
-      }
+    //  if (window.features != null) { // eslint-disable-line no-undef
+    //    alert('in rendercomplete and we have features');
+    //    const format = new GeoJSON();
+    //    window.vector.getSource().clear();
+    //    const urFeatures = format.readFeatures(window.features);
+    //    window.vector.getSource().addFeatures(urFeatures);
+    //  } else {
+    //    alert('in rendercomplete but features null');
+    //  }
     });
   }
   componentWillUnmount() {

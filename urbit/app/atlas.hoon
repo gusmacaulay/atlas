@@ -32,11 +32,14 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ~&  'an on-watch '
+  ~&  'blah on-watch '
   :: Do Not Remove the %sole condition - will break fresh installs only!!
-  ?.  =([%sole @ ~] path)
-    (on-watch:def path)
+  :: FIXME: this isn't right
+  :: ?.  =([%sole @ ~] path)
+  ::  (on-watch:def path)
   :: I Repeat Do not remove the %sole condition!
+  ::?.  =(/ path)
+  ~&  '/ on-watch'
   =/  jd  (geojson-featurecollection data)
   =/  jason  (en-json:html jd)
   ~&  'JSON unrendered'
@@ -58,7 +61,9 @@
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
+  ~&  'poke received'
   =^  cards  state
+    ~&  mark
     ?+    mark  (on-poke:def mark vase)
         %feature
       (poke-feature:cc !<(feature vase))
@@ -69,7 +74,7 @@
         %json
       (poke-json-create:cc !<(json vase))
         %delete
-      (poke-delete:cc !<(~ vase))
+      (poke-delete:cc !<(json vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -102,6 +107,7 @@
   |=  *
   ^-  (quip card _state)
   =/  features  (oust [0 1] data)
+  ~&  'deleted one item from data'
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
     data  features
