@@ -72,7 +72,7 @@
         %geojson
       (poke-geojson-create:cc !<(@t vase))
         %json
-      (poke-json-create:cc !<(json vase))
+      (poke-create:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
         %update
@@ -99,7 +99,6 @@
   |=  *
   ^-  (quip card _state)
   =/  jd  (geojson-featurecollection data)
-  ::(crip (en-json:html (pairs:enjs:format ['key' s+'pre-shared'] ['hash' s+(scot %uv eny)] ~)))
   =/  jason  (en-json:html jd)
     ~&  jason
   [~ state]
@@ -140,7 +139,7 @@
   ::(pairs:enjs `(list [@t json])`[["type" gjtype] ["features" fcj] ~])
   ::`(list [@t json])` ([["type" gjtype] ["features" fcj] ~])
   =/  gjobj  (pairs:enjs ~[[%type gjtype] [%features fcj]])
-  ~&  gjobj
+  ::~&  gjobj
   gjobj
 ::
 ++  geojson-feature
@@ -157,19 +156,32 @@
 ++  geojson-geom
   |=  g=geometry
   ^-  json
-::  ?=([%polygon *] g)
-    ::geojson-polygon g
+  ::?=([%polygon *] g)
+  ::  geojson-polygon g
   ::?=([%point *] g)
-  ::    (geojson-point point.g)
+  ::  (geojson-point point.g)
   ::?=([%linestring *] g)
   ::    (geojson-linestring g)
   ::==
+
+  ::=/  gjtype  (tape:enjs "Polygon")
+  ::=/  llc  ((list linearring) geom.+3.g)
+
+  ::=/  coords  ((list coord) ?~(llc ~ i.llc))
+  ::~&  coords
+  ::=/  c  (coord ?~(coords ~ i.coords))
+
   =/  gjtype  (tape:enjs "Point")
   =/  c  (coord geom.+3.g)
   =/  jc  (geojson-point c)
-  ::=/  jp  (frond:enjs ['coordinates' jc]
   =/  gj  (pairs:enjs ~[[%coordinates jc] [%type gjtype]])
   gj
+::
+::++  geojson-polygon
+::  |=  g=polygon
+::  ^-  json
+::  =/  gjtype  (tape:enjs "Polygon")
+::  gj
 ::
 ++  geojson-point
   |=  p=coord
@@ -191,7 +203,7 @@
   (slag 2 (scow %rd a))
 
 ::
-++  poke-json-create
+++  poke-create
   |=  gj=json
   ~&  'poke json create'
   ~&  gj

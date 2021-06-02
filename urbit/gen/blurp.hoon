@@ -5,4 +5,5 @@
 |=  c=[@rd @rd]
 =/  geom  [%point c]
 =/  props  (my ~[[%cheese 'camambert']])
-`feature`[geom props]
+:: `feature`[geom props]
+`feature`[geom]

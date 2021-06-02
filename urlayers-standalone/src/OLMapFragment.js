@@ -20,21 +20,67 @@ import { Draw, Modify, Snap } from 'ol/interaction';
 
 import _ from 'lodash';
 import Urbit, { UrbitInterface } from '@urbit/http-api';
-import atlasSubscription from './atlasSubscription';
+// import atlasSubscription from './atlasSubscription';
+import { SubscriptionRequestInterface } from '@urbit/http-api';
 // import { addPost, createPost, dateToDa, GraphNode, Resource, TextContent } from '@urbit/api';
-// Memoize the api without parameters
-// so it returns the same authenticated, subscribed instance every time
 
- const createApi = _.memoize(
-   (): UrbitInterface => {
-     const urb = new Urbit('http://localhost:8081', 'lidlut-tabwed-pillex-ridrup');
-     urb.ship = 'zod';
-     urb.onError = message => console.log(message); // Just log errors if we get any
-     urb.subscribe(atlasSubscription); // You can call urb.subscribe(...) as many times as you want to different subscriptions
-     urb.connect();
-     return urb;
-   }
- );
+const source = new VectorSource();
+const vector = new VectorLayer({
+  source: source,
+  style: new Style({
+    fill: new Fill({
+      color: 'rgba(255, 255, 255, 0.2)'
+    }),
+    stroke: new Stroke({
+      color: '#ffcc33',
+      width: 2
+    }),
+    image: new CircleStyle({
+      radius: 7,
+      fill: new Fill({
+        color: '#ffcc33'
+      })
+    })
+  })
+});
+const err = (error: Error): void => console.log(error);
+const quit = (): null => null;
+const handleEvent = (message: any): void => {
+    // refresh map?
+    // alert('refreshing map');
+      // alert('in handleEvent and we have features');
+      const format = new GeoJSON();
+      const featuresFormatted = format.readFeatures(message);
+      // vector.getSource().clear();
+      vector.getSource().addFeatures(featuresFormatted);
+      console.log('formatted features');
+      console.log(featuresFormatted);
+      // alert(window.vector.getSource().getFeatures());
+    // } else {
+    //   alert('in handleEvent but features null');
+    // console.log('subscripton features');
+    // console.log('window.features', features);
+};
+
+// Openlayer Map instance with openstreetmap base and vector edit layer
+// const api = new CreateApi();
+const subscription: SubscriptionRequestInterface = {
+  app: 'atlas', // atlas store gall app
+  path: '/',
+  event: handleEvent, err, quit
+};
+  // Memoize the api without parameters
+// so it returns the same authenticated, subscribed instance every time
+const CreateApi = _.memoize(
+  (): UrbitInterface => {
+    const urb = new Urbit('http://localhost:8081', 'lidlut-tabwed-pillex-ridrup');
+    urb.ship = 'zod';
+    urb.onError = message => console.log(message); // Just log errors if we get any
+    urb.subscribe(subscription); // You can call urb.subscribe(...) as many times as you want to different subscriptions
+    urb.connect();
+    return urb;
+  }
+);
 
 class OLMapFragment extends React.Component {
   constructor(props) {
@@ -43,9 +89,9 @@ class OLMapFragment extends React.Component {
     this.updateDimensions = this.updateDimensions.bind(this);
   }
 
-  handleEvent(diff) {
-    console.log('OL handle: ', diff);
-  }
+//  handleEvent(diff) {
+//    console.log('OL handle: ', diff);
+//  }
   updateDimensions() {
     const h = window.innerWidth >= 992 ? (window.innerHeight - 250) : 400;
     this.setState({
@@ -57,33 +103,13 @@ class OLMapFragment extends React.Component {
     this.updateDimensions();
   }
   componentDidMount() {
-    // Openlayer Map instance with openstreetmap base and vector edit layer
-    // const api = new CreateApi();
-    window.api = createApi();
-    const source = new VectorSource();
-    window.vector = new VectorLayer({
-      source: source,
-      style: new Style({
-        fill: new Fill({
-          color: 'rgba(255, 255, 255, 0.2)'
-        }),
-        stroke: new Stroke({
-          color: '#ffcc33',
-          width: 2
-        }),
-        image: new CircleStyle({
-          radius: 7,
-          fill: new Fill({
-            color: '#ffcc33'
-          })
-        })
-      })
-    });
+    const api = new CreateApi();
+
     const drawMcdrawFace = new Draw({
       source: source,
       type: 'Point'
     });
-    drawMcdrawFace.on('drawstart', function(event) { // eslint-disable-line prefer-arrow-callback
+    drawMcdrawFace.on('drawend', function(event) { // eslint-disable-line prefer-arrow-callback
       // console.log('draw state',window.store.state);
       const feature = event.feature;
       // var features = vector.getSource().getFeatures();
@@ -92,22 +118,17 @@ class OLMapFragment extends React.Component {
       const format = new GeoJSON();
       const gj = format.writeFeatureObject(feature);
       console.log(gj);
-      alert('poking');
-      window.api.poke({
+      // alert('poking');
+      // nothing up my sleeve ...
+      vector.getSource().clear();
+
+      // why do I have to re-subscribe tho?
+      api.poke({
         app: 'atlas',
-        mark: 'update', // was 'json'
+        // mark: 'update',
+        mark: 'json',
         json: gj
-      });
-      // refresh subscription?? and re-render
-       if (window.features != null) { // eslint-disable-line no-undef
-        alert('update map features  ');
-        const format = new GeoJSON();
-        const urFeatures = format.readFeatures(window.features);
-        window.vector.getSource().clear();
-        window.vector.getSource().addFeatures(urFeatures);
-       } else {
-        alert('in draw with window.features null');
-       }
+      }).then(api.subscribe(subscription));
     });
      // Custom Control Example
      const RotateNorthControl = (function (Control) { // eslint-disable-line wrap-iife
@@ -136,18 +157,30 @@ class OLMapFragment extends React.Component {
 
        RotateNorthControl.prototype.deleteFeature = function deleteFeature () {
          // this.getMap().getView().setRotation(0);
-         alert('DELETE!');
-         window.api.poke({
+         // alert('DELETE!');
+         vector.getSource().clear();
+         api.poke({
            app: 'atlas',
            mark: 'delete',
            json: {}
-         });
+         }).then(
+         // if (features != null) { // eslint-disable-line no-undef
+          // alert('update after delete ');
+          // const format = new GeoJSON();
+          // const urFeatures = format.readFeatures(features);
+          api.subscribe(subscription)
+          );
+          // alert('atlas delete poked');
+          // vector.getSource().addFeatures(urFeatures);
+         // } else {
+          // alert('in delete with window.features null');
+         // }
        };
 
        return RotateNorthControl;
      }(Control));
      // End Custom Control Example
-     window.map = new Map({
+     const map = new Map({
       //  Display the map in the div with the id of map
       target: 'map',
       layers: [
@@ -157,7 +190,7 @@ class OLMapFragment extends React.Component {
             projection: 'EPSG:3857'
           })
         }),
-        window.vector
+        vector
       ],
       // Add in the following map controls
       controls: DefaultControls().extend([
@@ -184,17 +217,17 @@ class OLMapFragment extends React.Component {
         zoom: 2
       })
     });
-    window.map.once('rendercomplete', function(event) { // eslint-disable-line prefer-arrow-callback
+    map.once('rendercomplete', function(event) { // eslint-disable-line prefer-arrow-callback
       // alert('render complete event');
-    //  if (window.features != null) { // eslint-disable-line no-undef
-    //    alert('in rendercomplete and we have features');
-    //    const format = new GeoJSON();
-    //    window.vector.getSource().clear();
-    //    const urFeatures = format.readFeatures(window.features);
-    //    window.vector.getSource().addFeatures(urFeatures);
-    //  } else {
-    //    alert('in rendercomplete but features null');
-    //  }
+     // if (features != null) { // eslint-disable-line no-undef
+        alert('render complete');
+        // const format = new GeoJSON();
+        // vector.getSource().clear();
+      //  const urFeatures = format.readFeatures(features);
+      //  vector.getSource().addFeatures(urFeatures);
+      // } else {
+        // alert('in rendercomplete but features null');
+      // }
     });
   }
   componentWillUnmount() {
