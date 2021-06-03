@@ -1,0 +1,41 @@
+body {
+  padding: 1rem;
+  margin: 0;
+}
+
+.App {
+  max-width: 40rem;
+  margin: 0 auto;
+  position: relative;
+}
+
+.App-logo {
+  position: absolute;
+  left: -10rem;
+  width: 20rem;
+  z-index: -1;
+  opacity: .5;
+  top: 0;
+}
+
+.message {
+  cursor: pointer;
+}
+
+.meta {
+  opacity: .5;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  border-bottom: 1px solid;
+  text-align: left;
+}
+
+td, th {
+  padding: .5rem;
+}

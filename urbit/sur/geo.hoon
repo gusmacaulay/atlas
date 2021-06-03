@@ -97,4 +97,10 @@
       owner=@p
       documents=(list document)
   ==
+::  Actions, for on-poke, ties in with mar/crud.hoon
+::  following patter from gall guide poketime example
++$  action
+  $%  [%delete ~]
+      [%pleasant ~]
+  ==
 --
