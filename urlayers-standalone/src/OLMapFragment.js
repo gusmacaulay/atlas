@@ -46,20 +46,13 @@ const vector = new VectorLayer({
 const err = (error: Error): void => console.log(error);
 const quit = (): null => null;
 const handleEvent = (message: any): void => {
-    // refresh map?
+    // refresh map
     // alert('refreshing map');
-      // alert('in handleEvent and we have features');
       const format = new GeoJSON();
       const featuresFormatted = format.readFeatures(message);
-      // vector.getSource().clear();
+      // nothing up my sleeve
+      vector.getSource().clear();
       vector.getSource().addFeatures(featuresFormatted);
-      console.log('formatted features');
-      console.log(featuresFormatted);
-      // alert(window.vector.getSource().getFeatures());
-    // } else {
-    //   alert('in handleEvent but features null');
-    // console.log('subscripton features');
-    // console.log('window.features', features);
 };
 
 // Openlayer Map instance with openstreetmap base and vector edit layer
@@ -69,7 +62,8 @@ const subscription: SubscriptionRequestInterface = {
   path: '/',
   event: handleEvent, err, quit
 };
-  // Memoize the api without parameters
+
+// Memoize the api without parameters
 // so it returns the same authenticated, subscribed instance every time
 const CreateApi = _.memoize(
   (): UrbitInterface => {
@@ -89,9 +83,6 @@ class OLMapFragment extends React.Component {
     this.updateDimensions = this.updateDimensions.bind(this);
   }
 
-//  handleEvent(diff) {
-//    console.log('OL handle: ', diff);
-//  }
   updateDimensions() {
     const h = window.innerWidth >= 992 ? (window.innerHeight - 250) : 400;
     this.setState({
@@ -110,19 +101,14 @@ class OLMapFragment extends React.Component {
       type: 'Point'
     });
     drawMcdrawFace.on('drawend', function(event) { // eslint-disable-line prefer-arrow-callback
-      // console.log('draw state',window.store.state);
+      // api.subscribe(subscription);
       const feature = event.feature;
-      // var features = vector.getSource().getFeatures();
-      // features = features.concat(feature);
-      // features.forEach(function() {
       const format = new GeoJSON();
       const gj = format.writeFeatureObject(feature);
-      console.log(gj);
-      // alert('poking');
       // nothing up my sleeve ...
-      vector.getSource().clear();
-
+      // vector.getSource().clear();
       // why do I have to re-subscribe tho?
+
       api.poke({
         app: 'atlas',
         // mark: 'update',
@@ -130,57 +116,44 @@ class OLMapFragment extends React.Component {
         json: gj
       }).then(api.subscribe(subscription));
     });
-     // Custom Control Example
-     const RotateNorthControl = (function (Control) { // eslint-disable-line wrap-iife
-       function RotateNorthControl(optOptions) {
+     // Custom Control
+     const DeleteControl = (function (Control) { // eslint-disable-line wrap-iife
+       function DeleteControl(optOptions) {
          const options = optOptions || {};
-
          const button = document.createElement('button');
          button.innerHTML = 'D';
-
          const element = document.createElement('div');
          element.className = 'rotate-north ol-unselectable ol-control';
          element.appendChild(button);
-
          Control.call(this, {
            element: element,
            target: options.target
          });
-
          button.addEventListener('click', this.deleteFeature.bind(this), false);
        }
-
        if ( Control )
-        RotateNorthControl.__proto__ = Control;
-       RotateNorthControl.prototype = Object.create( Control && Control.prototype );
-       RotateNorthControl.prototype.constructor = RotateNorthControl;
-
-       RotateNorthControl.prototype.deleteFeature = function deleteFeature () {
-         // this.getMap().getView().setRotation(0);
+        DeleteControl.__proto__ = Control;
+       DeleteControl.prototype = Object.create( Control && Control.prototype );
+       DeleteControl.prototype.constructor = DeleteControl;
+       DeleteControl.prototype.deleteFeature = function deleteFeature () {
          // alert('DELETE!');
-         vector.getSource().clear();
+         // vector.getSource().clear();
          api.poke({
            app: 'atlas',
            mark: 'delete',
            json: {}
          }).then(
-         // if (features != null) { // eslint-disable-line no-undef
-          // alert('update after delete ');
-          // const format = new GeoJSON();
-          // const urFeatures = format.readFeatures(features);
-          api.subscribe(subscription)
+           api.subscribe(subscription)
           );
-          // alert('atlas delete poked');
-          // vector.getSource().addFeatures(urFeatures);
-         // } else {
-          // alert('in delete with window.features null');
-         // }
        };
-
-       return RotateNorthControl;
+       return DeleteControl;
      }(Control));
      // End Custom Control Example
-     const map = new Map({
+
+     //
+
+     //
+     const map = new Map({ // eslint-disable-line @typescript-eslint/no-unused-vars
       //  Display the map in the div with the id of map
       target: 'map',
       layers: [
@@ -198,7 +171,7 @@ class OLMapFragment extends React.Component {
         new MousePosition(),
         new ScaleLine(),
         new OverviewMap(),
-        new RotateNorthControl()
+        new DeleteControl()
       ]),
       interactions: defaultInteractions().extend([
         new DragRotateAndZoom(),
@@ -217,18 +190,15 @@ class OLMapFragment extends React.Component {
         zoom: 2
       })
     });
-    map.once('rendercomplete', function(event) { // eslint-disable-line prefer-arrow-callback
-      // alert('render complete event');
-     // if (features != null) { // eslint-disable-line no-undef
-        alert('render complete');
-        // const format = new GeoJSON();
-        // vector.getSource().clear();
-      //  const urFeatures = format.readFeatures(features);
-      //  vector.getSource().addFeatures(urFeatures);
-      // } else {
-        // alert('in rendercomplete but features null');
-      // }
-    });
+    // was map.once('rendercomplete' ...
+    map.on('moveend', function(event) { // eslint-disable-line prefer-arrow-callback
+        // alert('move complete');
+        api.subscribe(subscription);
+     });
+    // quick and dirty map refresh technique (turn based?)
+    // map.once('movestart', function(event) { // eslint-disable-line prefer-arrow-callback
+    //  alert('map is moving');
+    // });
   }
   componentWillUnmount() {
     window.removeEventListener('resize', this.updateDimensions);
@@ -239,11 +209,9 @@ class OLMapFragment extends React.Component {
       height: this.state.height,
       backgroundColor: '#cccccc'
     };
-    return ( < div id = 'map'
-      style = {
-        style
-      } >
-      < /div>
+    return ( <div id = 'map'
+      style = { style }>
+      </div>
     );
   }
 }
