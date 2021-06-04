@@ -46,8 +46,11 @@ const vector = new VectorLayer({
 const err = (error: Error): void => console.log(error);
 const quit = (): null => null;
 const handleEvent = (message: any): void => {
-    // refresh map
-    // alert('refreshing map');
+      // refresh map
+      // presently, getting the whole geojson document and reloading
+      // I *think* openlayers is clever about how it re-renders
+      // but neverthless, in the long run should ideally only be sync diffs
+      // alert('handleEvent; refreshing map');
       const format = new GeoJSON();
       const featuresFormatted = format.readFeatures(message);
       // nothing up my sleeve
@@ -98,17 +101,13 @@ class OLMapFragment extends React.Component {
 
     const drawMcdrawFace = new Draw({
       source: source,
-      type: 'Point'
+      type: 'Polygon'
     });
     drawMcdrawFace.on('drawend', function(event) { // eslint-disable-line prefer-arrow-callback
       // api.subscribe(subscription);
       const feature = event.feature;
       const format = new GeoJSON();
       const gj = format.writeFeatureObject(feature);
-      // nothing up my sleeve ...
-      // vector.getSource().clear();
-      // why do I have to re-subscribe tho?
-
       api.poke({
         app: 'atlas',
         // mark: 'update',
@@ -149,9 +148,6 @@ class OLMapFragment extends React.Component {
        return DeleteControl;
      }(Control));
      // End Custom Control Example
-
-     //
-
      //
      const map = new Map({ // eslint-disable-line @typescript-eslint/no-unused-vars
       //  Display the map in the div with the id of map
@@ -191,14 +187,10 @@ class OLMapFragment extends React.Component {
       })
     });
     // was map.once('rendercomplete' ...
+    // quick and dirty map refresh technique (turn based?)
     map.on('moveend', function(event) { // eslint-disable-line prefer-arrow-callback
-        // alert('move complete');
         api.subscribe(subscription);
      });
-    // quick and dirty map refresh technique (turn based?)
-    // map.once('movestart', function(event) { // eslint-disable-line prefer-arrow-callback
-    //  alert('map is moving');
-    // });
   }
   componentWillUnmount() {
     window.removeEventListener('resize', this.updateDimensions);
