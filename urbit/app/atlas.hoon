@@ -164,24 +164,31 @@
   ::    (geojson-linestring g)
   ::==
 
-  :: =/  gjtype  (tape:enjs "Polygon")
+  =/  gjtype  (tape:enjs "Polygon")
   =/  llc  ((list linearring) geom.+3.g)
+  =/  jc  (geojson-polygon llc)
+  :: =/  c  (coord ?~(coords ~ i.coords))
 
-  =/  coords  ((list coord) ?~(llc ~ i.llc))
-  ~&  coords
-  =/  c  (coord ?~(coords ~ i.coords))
-
-  =/  gjtype  (tape:enjs "Point")
+  :: =/  gjtype  (tape:enjs "Point")
   :: =/  c  (coord geom.+3.g)
-  =/  jc  (geojson-point c)
+  ::=/  jc  (geojson-point c)
+
   =/  gj  (pairs:enjs ~[[%coordinates jc] [%type gjtype]])
   gj
 ::
-::++  geojson-polygon
-::  |=  g=polygon
-::  ^-  json
-::  =/  gjtype  (tape:enjs "Polygon")
-::  gj
+++  geojson-polygon
+  |=  lr=(list linearring)
+  ^-  json
+  =/  gjrings  (turn lr geojson-linearring)
+  =/  gjpoly  [%a gjrings]
+  gjpoly
+::
+++  geojson-linearring
+ |=  l=linearring
+ ^-  json
+ =/  coords  ((list coord) ?~(l ~ l))
+ =/  jring  (turn coords geojson-point)
+ [%a jring]
 ::
 ++  geojson-point
   |=  p=coord
