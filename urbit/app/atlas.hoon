@@ -32,22 +32,13 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ~&  'blah on-watch '
-  :: Do Not Remove the %sole condition - will break fresh installs only!!
-  :: FIXME: this isn't right
-  :: ?.  =([%sole @ ~] path)
-  ::  (on-watch:def path)
-  :: I Repeat Do not remove the %sole condition!
-  ::?.  =(/ path)
-  ~&  '/ on-watch'
-  =/  jd  (geojson-featurecollection data)
-  =/  jason  (en-json:html jd)
-  ~&  'JSON unrendered'
-  ~&  jd
-  ~&  'JSON rendered??'
-  ~&  jason
-  :_  this
-  [%give %fact ~ %json !>(jd)]~
+  ~&  'any on-watch '
+  ?+    path  (on-watch:def path)
+      [%portal ~]
+    :_  this
+    [%give %fact ~ %json !>((fetch-document path))]~
+  ==
+  ::(on-watch:def path)
 ::
 ++  on-agent  on-agent:def
 ::
@@ -92,6 +83,17 @@
 |_  bol=bowl:gall
 ::
 ::
+::
+++  fetch-document
+  |=  =path
+  ^-  json
+  ~&  'fetch (all) geojson from store'
+  =/  jd  (geojson-featurecollection data)
+  ::  DEBUG
+  ::  =/  jason  (en-json:html jd)
+  ::  ~&  'JSON rendered'
+  ::  ~&  jason
+  jd
 
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
@@ -100,7 +102,7 @@
   ^-  (quip card _state)
   =/  jd  (geojson-featurecollection data)
   =/  jason  (en-json:html jd)
-    ~&  jason
+  ~&  jason
   [~ state]
 ::
 ::  Delete operation, removes feature from the store
@@ -130,8 +132,8 @@
 ++  geojson-featurecollection
   |=  fc=(list feature)
   ^-  json
-  =/  count  (lent fc)
-  ::~&  'There are'  ~&  count  ~&  'features in the store'
+  :: =/  count  (lent fc)
+  :: ~&  'There are'  ~&  count  ~&  'features in the store'
   =/  fcj  [%a ?~(fc ~ (turn fc geojson-feature))]
   ::~&  fcj
   =/  gjtype  (tape:enjs "FeatureCollection")
@@ -145,7 +147,7 @@
 ++  geojson-feature
   |=  f=feature
   ^-  json
-  ~&  geometry.f
+  :: ~&  geometry.f
   =/  jg  (geojson-geom geometry.f)
   =/  gjtype  (tape:enjs "Feature")
  ::frond:enjs ['type' 'point']]
@@ -193,10 +195,10 @@
 ++  geojson-point
   |=  p=coord
   ^-  json
-  ~&  ~[(anynumb lon.p) (anynumb lat.p)]
+  ::    ~&  ~[(anynumb lon.p) (anynumb lat.p)]
   =/  c  ~[lon.p lat.p]
   =/  ca  (turn c anynumb)
-  ~&  ca
+  ::  ~&  ca
   =/  jc  [%a ca]
   jc
 ::
@@ -212,10 +214,10 @@
 ::
 ++  poke-create
   |=  gj=json
-  ~&  'poke json create'
-  ~&  gj
+  ::  ~&  'poke json create'
+  ::  ~&  gj
   =/  feature  (feature (degjs gj))
-  ~&  feature
+  ::  ~&  feature
   =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
@@ -228,7 +230,7 @@
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  feature  (feature (degjs (need (de-json:html gj))))
-  ~&  feature
+  ::  ~&  feature
   =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
@@ -246,11 +248,9 @@
   |=  =json
   ^-  geometry
   ?>  ?=([%o *] json)
-  ~&  '====='
-  ~&  json
-  ::~&  (~(got by p.json) 'coordinates')
-  ::~&  (dejs-linestring json)
-  ~&  '====='
+  :: ~&  '====='
+  :: ~&  json
+  :: ~&  '====='
   =/  typ=@t  (so (~(got by p.json) 'type'))
   ?+  typ  ~|([%unknown-geometry typ] !!)
       %'Polygon'  (dejs-polygon json)

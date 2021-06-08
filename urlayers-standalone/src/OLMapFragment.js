@@ -25,6 +25,7 @@ import { SubscriptionRequestInterface } from '@urbit/http-api';
 // import { addPost, createPost, dateToDa, GraphNode, Resource, TextContent } from '@urbit/api';
 
 const source = new VectorSource();
+const format = new GeoJSON();
 const vector = new VectorLayer({
   source: source,
   style: new Style({
@@ -56,13 +57,14 @@ const handleEvent = (message: any): void => {
       // nothing up my sleeve
       vector.getSource().clear();
       vector.getSource().addFeatures(featuresFormatted);
+      //
 };
 
 // Openlayer Map instance with openstreetmap base and vector edit layer
 // const api = new CreateApi();
 const subscription: SubscriptionRequestInterface = {
   app: 'atlas', // atlas store gall app
-  path: '/',
+  path: '/portal',
   event: handleEvent, err, quit
 };
 
@@ -82,7 +84,6 @@ const CreateApi = _.memoize(
 class OLMapFragment extends React.Component {
   constructor(props) {
     super(props);
-
     this.updateDimensions = this.updateDimensions.bind(this);
   }
 
@@ -98,23 +99,22 @@ class OLMapFragment extends React.Component {
   }
   componentDidMount() {
     const api = new CreateApi();
-
     const drawMcdrawFace = new Draw({
       source: source,
       type: 'Polygon'
     });
     drawMcdrawFace.on('drawend', function(event) { // eslint-disable-line prefer-arrow-callback
-      // api.subscribe(subscription);
-      const feature = event.feature;
-      const format = new GeoJSON();
-      const gj = format.writeFeatureObject(feature);
-      api.poke({
-        app: 'atlas',
-        // mark: 'update',
-        mark: 'json',
-        json: gj
-      }).then(api.subscribe(subscription));
-    });
+          // api.subscribe(subscription);
+          const feature = event.feature;
+
+          const gj = format.writeFeatureObject(feature);
+          api.poke({
+            app: 'atlas',
+            // mark: 'update',
+            mark: 'json',
+            json: gj
+          }).then(api.subscribe(subscription));
+        });
      // Custom Control
      const DeleteControl = (function (Control) { // eslint-disable-line wrap-iife
        function DeleteControl(optOptions) {
@@ -186,7 +186,7 @@ class OLMapFragment extends React.Component {
         zoom: 2
       })
     });
-    // was map.once('rendercomplete' ...
+    // because I'm reactarded ...
     // quick and dirty map refresh technique (turn based?)
     map.on('moveend', function(event) { // eslint-disable-line prefer-arrow-callback
         api.subscribe(subscription);
