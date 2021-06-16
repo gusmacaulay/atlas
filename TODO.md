@@ -9,13 +9,18 @@ TODO
 
 * [Done] fixme: unreliable subscription behaviour, loading features not working on chrome, sometimes doesn't work on firefox.  Seems like atlas has to catchup or something?
 
+* [Done] fixme: |start doesn't work because of dojo subscription
+
+*  fixme: convert openlayers operations to perform 'update' action (create/delete for portal/document only)
+
 + Phase 1
 
 * Complete GeoJSON rendering (90% done)
  * for all geometry types
  * with/without properties
- * Bounding box options etc.?? (can probably get away without this)
-
+ * Bounding box options etc.?? (can probably get away without this - nothing to really test it against)
+ * Get all examples from geojsonlint working
+ 
 * Fix GEOJson properties issues
  * currently disabled in sur file as I need to make optional when reading in
 
@@ -24,8 +29,8 @@ TODO
 
 * Complete minimal CRUD with;
  * Document IDs
- * Delete by ID
- * Update Operation
+ * Delete by ID --> actually just do this as update whole document for now
+ [Done] * Update Operation
  * Add doc id path to on-watch
 
 * Add Geometry type selector to UI
@@ -59,8 +64,8 @@ TODO
 
 ### store
 
-* Need to do some storing
- * CRUD operations
+[Done] * Need to do some storing
+[Done] * CRUD operations
 
 ### Hook and View
 

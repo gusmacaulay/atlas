@@ -158,25 +158,28 @@
 ++  geojson-geom
   |=  g=geometry
   ^-  json
-  ::?=([%polygon *] g)
-  ::  geojson-polygon g
-  ::?=([%point *] g)
-  ::  (geojson-point point.g)
-  ::?=([%linestring *] g)
-  ::    (geojson-linestring g)
-  ::==
-
-  =/  gjtype  (tape:enjs "Polygon")
-  =/  llc  ((list linearring) geom.+3.g)
-  =/  jc  (geojson-polygon llc)
+  =/  particular  +3.g
+  =/  gtype  +2.g
+  ~&  gtype
+  ::?:  =(%point gtype)
+  ::  ~&  'point geom!'
+  ::  ~&  g
+  ?+    gtype  (geojson-point (point geom.particular))
+    %point
+   (geojson-point (point geom.particular))
+    %polygon
+   (geojson-polygon ((list linearring) geom.particular))
+  ==
+  ::(geojson-polygon ((list linearring) geom.particular))
+ :: =/  gjtype  (tape:enjs "Polygon")
+::  =/  llc  ((list linearring) geom.+3.g)
+::  =/  jc  (geojson-polygon llc)
   :: =/  c  (coord ?~(coords ~ i.coords))
-
   :: =/  gjtype  (tape:enjs "Point")
   :: =/  c  (coord geom.+3.g)
   ::=/  jc  (geojson-point c)
-
-  =/  gj  (pairs:enjs ~[[%coordinates jc] [%type gjtype]])
-  gj
+::  =/  gj  (pairs:enjs ~[[%coordinates jc] [%type gjtype]])
+::  gj
 ::
 ++  geojson-polygon
   |=  lr=(list linearring)
@@ -193,14 +196,17 @@
  [%a jring]
 ::
 ++  geojson-point
-  |=  p=coord
+  |=  p=point
   ^-  json
   ::    ~&  ~[(anynumb lon.p) (anynumb lat.p)]
-  =/  c  ~[lon.p lat.p]
+  ::=/  c  (coord geom.+3.g)
+  =/  c  ~[lon.coord.p lat.coord.p]
   =/  ca  (turn c anynumb)
   ::  ~&  ca
-  =/  jc  [%a ca]
-  jc
+  =/  gjc  [%a ca]
+  =/  type  (tape:enjs "Point")
+  =/  gj  (pairs:enjs ~[[%coordinates gjc] [%type type]])
+  gj
 ::
 :: How does any of this work?! what does it mean!!
 ++  anynumb
@@ -210,7 +216,6 @@
   %-  crip
   |-  ^-  ^tape
   (slag 2 (scow %rd a))
-
 ::
 ++  poke-create
   |=  gj=json
@@ -230,6 +235,7 @@
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  feature  (feature (degjs (need (de-json:html gj))))
+  ::  =/  feature  (feature (degjs gj))
   ::  ~&  feature
   =/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~

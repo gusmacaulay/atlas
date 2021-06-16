@@ -1,8 +1,7 @@
+::  insert geojson :atlas|geojson-create '{  "type": "Feature",  "geometry": {    "type": "Point",    "coordinates": [124.5, 9.0]  },  "properties": {    "name": "Dinagat Islands"
+::  usage as above, takes a @t representation of gjson and adds to atlas store
 /-  *geo
 :-  %say
-::  usage;
-::  =gjson '{  "type": "Feature",  "geometry": {    "type": "Point",    "coordinates": [125.6, 10.1]  },  "properties": {    "name": "Dinagat Islands"  }}'
-::  :atlas|geojson-create gjson
 |=  [* [gj=@t ~] ~]
 ~&  gj
 [%geojson gj]
