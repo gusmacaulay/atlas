@@ -101,8 +101,8 @@
   |=  *
   ^-  (quip card _state)
   =/  jd  (geojson-featurecollection data)
-  =/  jason  (en-json:html jd)
-  ~&  jason
+  ::=/  jason  (en-json:html jd)
+  ~&  (crip (en-json:html jd))
   [~ state]
 ::
 ::  Delete operation, removes feature from the store
@@ -158,17 +158,14 @@
 ++  geojson-geom
   |=  g=geometry
   ^-  json
-  =/  particular  +3.g
+  =/  anygeom  +3.g
   =/  gtype  +2.g
   ~&  gtype
-  ::?:  =(%point gtype)
-  ::  ~&  'point geom!'
-  ::  ~&  g
-  ?+    gtype  (geojson-point (point geom.particular))
+  ?+    gtype  !!
     %point
-   (geojson-point (point geom.particular))
+   (geojson-point (point geom.anygeom))
     %polygon
-   (geojson-polygon ((list linearring) geom.particular))
+   (geojson-polygon ((list linearring) geom.anygeom))
   ==
   ::(geojson-polygon ((list linearring) geom.particular))
  :: =/  gjtype  (tape:enjs "Polygon")
