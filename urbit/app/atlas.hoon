@@ -8,7 +8,8 @@
 +$  versioned-state
   $%  state-zero
   ==
-+$  state-zero  [%0 data=(list feature)]
+::+$  state-zero  [%0 data=(list feature)]
++$  state-zero  [%0 data=content]
 --
 =|  state-zero
 =*  state  -
@@ -56,18 +57,18 @@
   =^  cards  state
     ~&  mark
     ?+    mark  (on-poke:def mark vase)
-        %feature
-      (poke-feature:cc !<(feature vase))
+      ::  %feature
+      :: (poke-feature:cc !<(feature vase))
         %pleasant
       (poke-pleasant:cc !<(~ vase))
         %geojson
       (poke-geojson-create:cc !<(@t vase))
-        %json
-      (poke-create:cc !<(json vase))
+      ::  %json
+      ::(poke-create:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
-        %update
-      (poke-update:cc !<(json vase))
+      ::  %update
+      ::(poke-update:cc !<(json vase))
     ==
   [cards this]
 ++  on-save  on-save:def
@@ -88,7 +89,7 @@
   |=  =path
   ^-  json
   ~&  'fetch (all) geojson from store'
-  =/  jd  (geojson-featurecollection data)
+  =/  jd  (geojson-document data)
   ::  DEBUG
   ::  =/  jason  (en-json:html jd)
   ::  ~&  'JSON rendered'
@@ -100,7 +101,7 @@
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
-  =/  jd  (geojson-featurecollection data)
+  =/  jd  (geojson-document data)
   ::=/  jason  (en-json:html jd)
   ~&  (crip (en-json:html jd))
   [~ state]
@@ -109,11 +110,12 @@
 ++  poke-delete
   |=  *
   ^-  (quip card _state)
-  =/  features  (oust [0 1] data)
-  ~&  'deleted one item from data'
-  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  ::=/  features  (oust [0 1] data)
+  ~&  'deleted document'
+  =/  content  [%empty ~]
+  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
   %=  state
-    data  features
+    data  content
   ==
 ::
 ::  Update Operation, deletes and replaces document with input GeoJSON
@@ -129,12 +131,28 @@
     data  features
   ==
 ::
+++  geojson-document
+  |=  =content
+  ^-  json
+  =/  geocontent  +3.content
+  =/  ctype  +2.content
+  ~&  ctype
+  ?+    ctype  !!
+    %featurecollection
+  (geojson-featurecollection (featurecollection geocontent))
+    %feature
+  (geojson-feature (feature geocontent))
+    %geometry
+  (geojson-feature (geometry geocontent))
+  ==
+::
+::
 ++  geojson-featurecollection
-  |=  fc=(list feature)
+  |=  fc=featurecollection
   ^-  json
   :: =/  count  (lent fc)
   :: ~&  'There are'  ~&  count  ~&  'features in the store'
-  =/  fcj  [%a ?~(fc ~ (turn fc geojson-feature))]
+  =/  fcj  [%a ?~(fc ~ (turn `(list feature)`fc geojson-feature))]
   ::~&  fcj
   =/  gjtype  (tape:enjs "FeatureCollection")
   ::[(frond:enjs ['type' gjtype]) (frond:enjs ['features' fcj]) ~])
@@ -220,10 +238,10 @@
   ::  ~&  gj
   =/  feature  (feature (degjs gj))
   ::  ~&  feature
-  =/  features  (weld data ~[feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  ::=/  features  (weld data ~[feature])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(feature)]~
   %=  state
-    data  features
+    data  feature
   ==
 ::
 ++  poke-geojson-create
@@ -232,12 +250,11 @@
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  feature  (feature (degjs (need (de-json:html gj))))
-  ::  =/  feature  (feature (degjs gj))
-  ::  ~&  feature
-  =/  features  (weld data ~[feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
+  ::=/  features  (weld data ~[feature])
+  =/  geothing  [%feature feature]
+  :-  [%give %fact ~[/atlas] %featurecollect !>(geothing)]~
   %=  state
-    data  features
+    data  geothing
   ==
 ::
 ++  degjs
@@ -304,14 +321,14 @@
   ::(geometry (point ~(got by json) 'coordinates'))
 ::
 ::  Poke feature, adds a feature to our featurecollection (the store, for now)
-++  poke-feature
-  |=  f=feature
-  ^-  (quip card _state)
-  =/  features  (weld data ~[f])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
-  %=  state
-    data  features
-  ==
+::++  poke-feature
+::  |=  f=feature
+::  ^-  (quip card _state)
+::  :: =/  features  (weld data ~[f])
+::  :-  [%give %fact ~[/atlas] %featurecollect !>(f)]~
+::  %=  state
+::    data  f
+::  ==
 --
 ::
 ::  Poke geom deprecated

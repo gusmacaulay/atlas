@@ -79,17 +79,27 @@
 +$  featurecollection
   $:  =(list feature) ::?? check geojson, might be a key value thing
   ==
+::  GeoJSON Content, can be any of the top level geojson objects
+::  Or empty?
++$  content
+  $%  [%geometrycollection geometrycollection]
+      [%featurecollection featurecollection]
+      [%geometry geometry]
+      [%feature feature]
+      [%empty ~]
+  ==
 ::  Container for GeoJSON objects
 ::  This should map closely a GeoJSON document, which is either a ..
-::  geometrycollection or a feature collection
+::  geometrycollection or a feature collection or a geometry or a feature?
 +$  document
   $:  =id
       =title
       owner=@p
-      :: bbox, optional
+      =content
+      :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
   ==
-::  Portal is a set of GeoJSON documents, probably a whole lot of other stuff too
+::  Portal is a list of GeoJSON documents, probably a whole lot of other stuff too
 ::  ... TBD in stage 2 project
 +$  portal
   $:  =id
