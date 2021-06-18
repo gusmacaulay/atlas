@@ -123,7 +123,7 @@
   |=  gj=json
   ~&  'poke update'
   ~&  gj
-  =/  feature  (feature (degjs gj))
+  =/  feature  (feature (dejs-feature gj))
   ~&  feature
   =/  features  ~[feature]
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
@@ -142,8 +142,8 @@
   (geojson-featurecollection (featurecollection geocontent))
     %feature
   (geojson-feature (feature geocontent))
-    %geometry
-  (geojson-feature (geometry geocontent))
+  ::  %geometry
+  ::(geojson-feature (geometry geocontent))
   ==
 ::
 ::
@@ -170,7 +170,7 @@
   =/  gjtype  (tape:enjs "Feature")
  ::frond:enjs ['type' 'point']]
   ::(frond:enjs ['geometry' jg])
-  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg]])
+  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f]])
   jf
 ::
 ++  geojson-geom
@@ -236,7 +236,7 @@
   |=  gj=json
   ::  ~&  'poke json create'
   ::  ~&  gj
-  =/  feature  (feature (degjs gj))
+  =/  feature  (feature (dejs-feature gj))
   ::  ~&  feature
   ::=/  features  (weld data ~[feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(feature)]~
@@ -249,19 +249,23 @@
   ^-  (quip card _state)
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
-  =/  feature  (feature (degjs (need (de-json:html gj))))
+  =/  feature  (feature (dejs-feature (need (de-json:html gj))))
   ::=/  features  (weld data ~[feature])
-  =/  geothing  [%feature feature]
-  :-  [%give %fact ~[/atlas] %featurecollect !>(geothing)]~
+  =/  content  [%feature feature]
+  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
   %=  state
-    data  geothing
+    data  content
   ==
 ::
-++  degjs
+++  dejs-feature
 %-  ot
   :~  [%geometry dejs-geometry]
-      ::[%properties (om so)] :: need to make properties optional/null
+      [%properties *]
+::      [%fid dejs-fid]
   ==
+::
+++  dejs-fid
+  ~
 ::
 ++  dejs-geometry
   =,  dejs:format

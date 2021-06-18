@@ -60,6 +60,7 @@
       [%multipoint geom=multipoint]
       [%multilinestring geom=multilinestring]
       [%multipolygon geom=multipolygon]
+      [%empty geom=~] :: I don't make the rules, null is valid geometry in geojson
   ==
 ::
 ::
@@ -74,7 +75,8 @@
 ::  and a title and id
 +$  feature
   $:  =geometry :: Generic geometry
-      ::properties=(map @tas @tas) ::optional?? allow non text types?
+      properties=json :: properties field mandatory but can be null
+    ::  fid=(unit id) :: optional id field according to geojson spec 3.2
   ==
 +$  featurecollection
   $:  =(list feature) ::?? check geojson, might be a key value thing
