@@ -251,6 +251,8 @@
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  jsonobject  (need (de-json:html gj))
+  =/  gom  (om jsonobject)
+  ~&  gom
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   ~&  feature
