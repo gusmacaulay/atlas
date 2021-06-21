@@ -9,6 +9,7 @@
 +$  drooc  [lat=@rd lon=@rd]
 +$  title     @t
 +$  id  @ud
++$  fid  @ud
 ::+$  properties
 ::  point is a geometry, consists of coord
 ::
@@ -76,7 +77,7 @@
 +$  feature
   $:  =geometry :: Generic geometry
       properties=json :: properties field mandatory but can be null
-    ::  fid=(unit id) :: optional id field according to geojson spec 3.2
+      =fid :: optional id field according to geojson spec 3.2
   ==
 +$  featurecollection
   $:  =(list feature) ::?? check geojson, might be a key value thing

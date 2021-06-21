@@ -168,9 +168,10 @@
   :: ~&  geometry.f
   =/  jg  (geojson-geom geometry.f)
   =/  gjtype  (tape:enjs "Feature")
+  =/  fid  (numb:enjs fid.f)
  ::frond:enjs ['type' 'point']]
   ::(frond:enjs ['geometry' jg])
-  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f]])
+  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f] [%id fid]])
   jf
 ::
 ++  geojson-geom
@@ -249,7 +250,10 @@
   ^-  (quip card _state)
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
-  =/  feature  (feature (dejs-feature (need (de-json:html gj))))
+  =/  jsonobject  (need (de-json:html gj))
+  =/  uncastfeature  (dejs-feature jsonobject)
+  =/  feature  (feature uncastfeature)
+  ~&  feature
   ::=/  features  (weld data ~[feature])
   =/  content  [%feature feature]
   :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
@@ -258,14 +262,19 @@
   ==
 ::
 ++  dejs-feature
-%-  ot
-  :~  [%geometry dejs-geometry]
-      [%properties *]
-::      [%fid dejs-fid]
-  ==
+  ::^-  feature
+  %-  ot
+    :~  [%geometry dejs-geometry]
+        [%properties *]
+    ::    dejs-fid
+        [%id ni]
+   ==
 ::
 ++  dejs-fid
-  ~
+  ::|=  =json
+  ::^-  fid
+  ~&  'blah'
+  ni
 ::
 ++  dejs-geometry
   =,  dejs:format
