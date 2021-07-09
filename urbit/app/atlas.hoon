@@ -168,10 +168,16 @@
   :: ~&  geometry.f
   =/  jg  (geojson-geom geometry.f)
   =/  gjtype  (tape:enjs "Feature")
-  =/  fid  (numb:enjs fid.f)
- ::frond:enjs ['type' 'point']]
+  ::=/  fid  (numb:enjs fid.f)
+  ::=/  fid  `unit`[~ fid.f]
+  =/  fid  fid.f
+  ~&  fid
+  ?~  fid
+    (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f]])
+  =/  fidjs  (need fid)
+  ::frond:enjs ['type' 'point']]
   ::(frond:enjs ['geometry' jg])
-  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f] [%id fid]])
+  =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f] [%id fidjs]])
   jf
 ::
 ++  geojson-geom
@@ -240,9 +246,10 @@
   =/  feature  (feature (dejs-feature gj))
   ::  ~&  feature
   ::=/  features  (weld data ~[feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(feature)]~
+  =/  content  (content [%feature feature])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
   %=  state
-    data  feature
+    data  content
   ==
 ::
 ++  poke-geojson-create
@@ -251,32 +258,63 @@
   ~&  'geojson create next gen'
   ::  de-json:html returns a unit, so use 'need' to get past ~
   =/  jsonobject  (need (de-json:html gj))
-  =/  gom  (om jsonobject)
-  ~&  gom
+  ::?+  typ  ~|([%unknown-geometry typ] !!)
   =/  uncastfeature  (dejs-feature jsonobject)
+  ::=/  empty  ~
+  ::=/  dumbobj  (json 'blah')
+  ::=/  featuremap  (my [uncastfeature ~])
+  ::=/  fidfeaturemap  (~(put by featuremap) "fid" [%id dumbobj])
+  ~&  'uncast'
+  ~&  uncastfeature
   =/  feature  (feature uncastfeature)
+  ~&  'cast'
   ~&  feature
   ::=/  features  (weld data ~[feature])
-  =/  content  [%feature feature]
+  =/  content  (content [%feature feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
   %=  state
     data  content
   ==
 ::
+::++  dejs-gom
+::  [%feature om]
+::
 ++  dejs-feature
+  |=  =json
+  ~&  +2.json
+  ?>  ?=([%o *] json)
+  =/  fidob  (~(get by p.json) 'id')
+  ?~  fidob
+    (dejs-feature-fidless json)
+  (dejs-feature-fid json)
+::
+++  dejs-feature-fidless
+  |=  =json
+  ::%-  ot
+  ::(weld (dejs-feature-core json) ~[[%o ~]])
+  ?>  ?=([%o *] json)
+  =/  geomob  (dejs-geometry (need (~(get by p.json) 'geometry')))
+  =/  propsob  (need (~(get by p.json) 'properties'))
+  =/  fidob  ~
+  =/  core  ~[geomob propsob fidob]
+  core
+  ::==
+++  dejs-feature-core
+  :~  [%geometry dejs-geometry]
+      [%properties json]
+  ==
+::
+++  dejs-feature-fid
   ::^-  feature
   %-  ot
     :~  [%geometry dejs-geometry]
-        [%properties *]
-    ::    dejs-fid
-        [%id ni]
-   ==
+        [%properties json]
+        [%id dejs-fid]
+  ==
 ::
 ++  dejs-fid
-  ::|=  =json
-  ::^-  fid
-  ~&  'blah'
-  ni
+  |=  =json
+  (fid (some json))
 ::
 ++  dejs-geometry
   =,  dejs:format

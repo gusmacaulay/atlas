@@ -9,7 +9,9 @@
 +$  drooc  [lat=@rd lon=@rd]
 +$  title     @t
 +$  id  @ud
-+$  fid  @ud
+::+$  fid @ud
++$  fid  (unit json)
+::+$  fid  json
 ::+$  properties
 ::  point is a geometry, consists of coord
 ::
