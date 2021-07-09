@@ -172,7 +172,7 @@
   ::=/  fid  `unit`[~ fid.f]
   =/  fid  fid.f
   ~&  fid
-  ?~  fid
+  ?~  (need fid)
     (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f]])
   =/  fidjs  (need fid)
   ::frond:enjs ['type' 'point']]
