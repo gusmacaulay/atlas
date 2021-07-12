@@ -206,16 +206,27 @@
 ++  geojson-polygon
   |=  lr=(list linearring)
   ^-  json
-  =/  gjrings  (turn lr geojson-linearring)
-  =/  gjpoly  [%a gjrings]
-  gjpoly
+  ~&  'RENDERING POLYGON GEOM'
+  =/  gjring  (turn lr geojson-linearring)
+  =/  gjrings  [%a gjring]
+  =/  type  (tape:enjs "Polygon")
+  =/  gj  (pairs:enjs ~[[%coordinates gjrings] [%type type]])
+  gj
 ::
 ++  geojson-linearring
  |=  l=linearring
  ^-  json
  =/  coords  ((list coord) ?~(l ~ l))
- =/  jring  (turn coords geojson-point)
- [%a jring]
+ =/  jring  (turn coords geojson-coord)::geojson-point)
+ =/  gjr  [%a jring]
+ gjr
+
+::
+++  geojson-coord
+ |=  =coord
+ =/  c  ~[lon.coord lat.coord]
+ =/  ca  (turn c reald)
+ [%a ca]
 ::
 ++  geojson-point
   |=  p=point
@@ -223,7 +234,7 @@
   ::    ~&  ~[(anynumb lon.p) (anynumb lat.p)]
   ::=/  c  (coord geom.+3.g)
   =/  c  ~[lon.coord.p lat.coord.p]
-  =/  ca  (turn c anynumb)
+  =/  ca  (turn c reald)
   ::  ~&  ca
   =/  gjc  [%a ca]
   =/  type  (tape:enjs "Point")
@@ -231,7 +242,7 @@
   gj
 ::
 :: How does any of this work?! what does it mean!!
-++  anynumb
+++  reald
   |=  a=@rd
   ^-  json
   :-  %n
@@ -260,10 +271,6 @@
   =/  jsonobject  (need (de-json:html gj))
   ::?+  typ  ~|([%unknown-geometry typ] !!)
   =/  uncastfeature  (dejs-feature jsonobject)
-  ::=/  empty  ~
-  ::=/  dumbobj  (json 'blah')
-  ::=/  featuremap  (my [uncastfeature ~])
-  ::=/  fidfeaturemap  (~(put by featuremap) "fid" [%id dumbobj])
   ~&  'uncast'
   ~&  uncastfeature
   =/  feature  (feature uncastfeature)
@@ -356,7 +363,8 @@
   ^-  geometry
   :-  %polygon
   ?>  ?=([%o *] json)
-  ::~&  p.json
+  ~&  'POLYGON!!'
+  ~&  p.json
   %-  (ar (ar dejs-coord))
   (~(got by p.json) 'coordinates')
 ::
