@@ -142,8 +142,8 @@
   (geojson-featurecollection (featurecollection geocontent))
     %feature
   (geojson-feature (feature geocontent))
-  ::  %geometry
-  ::(geojson-feature (geometry geocontent))
+    %geometry
+  (geojson-geometry (geometry geocontent))
   ==
 ::
 ::
@@ -166,7 +166,7 @@
   |=  f=feature
   ^-  json
   :: ~&  geometry.f
-  =/  jg  (geojson-geom geometry.f)
+  =/  jg  (geojson-geometry geometry.f)
   =/  gjtype  (tape:enjs "Feature")
   ::=/  fid  (numb:enjs fid.f)
   ::=/  fid  `unit`[~ fid.f]
@@ -180,17 +180,18 @@
   =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f] [%id fidjs]])
   jf
 ::
-++  geojson-geom
+++  geojson-geometry
   |=  g=geometry
   ^-  json
   =/  anygeom  +3.g
   =/  gtype  +2.g
-  ~&  gtype
   ?+    gtype  !!
     %point
    (geojson-point (point geom.anygeom))
     %polygon
    (geojson-polygon ((list linearring) geom.anygeom))
+    %linestring
+   (geojson-linestring (linestring geom.anygeom))
   ==
   ::(geojson-polygon ((list linearring) geom.particular))
  :: =/  gjtype  (tape:enjs "Polygon")
@@ -206,27 +207,35 @@
 ++  geojson-polygon
   |=  lr=(list linearring)
   ^-  json
-  ~&  'RENDERING POLYGON GEOM'
   =/  gjring  (turn lr geojson-linearring)
   =/  gjrings  [%a gjring]
   =/  type  (tape:enjs "Polygon")
   =/  gj  (pairs:enjs ~[[%coordinates gjrings] [%type type]])
   gj
 ::
-++  geojson-linearring
- |=  l=linearring
- ^-  json
- =/  coords  ((list coord) ?~(l ~ l))
- =/  jring  (turn coords geojson-coord)::geojson-point)
- =/  gjr  [%a jring]
- gjr
+++  geojson-linestring
+  |=  l=linestring
+  ^-  json
+  =/  type  (tape:enjs "LineString")
+  :: A linearring and a linestring are the same* thing
+  :: * a linearring actually has matching start and end coords
+  :: but that isn't validated here
+  (pairs:enjs ~[[%coordinates (geojson-linearring l)] [%type type]])
 
 ::
+++  geojson-linearring
+  |=  l=linearring
+  ^-  json
+  =/  coords  ((list coord) ?~(l ~ l))
+  =/  jring  (turn coords geojson-coord)::geojson-point)
+  =/  gjr  [%a jring]
+  gjr
+::
 ++  geojson-coord
- |=  =coord
- =/  c  ~[lon.coord lat.coord]
- =/  ca  (turn c reald)
- [%a ca]
+  |=  =coord
+  =/  c  ~[lon.coord lat.coord]
+  =/  ca  (turn c reald)
+  [%a ca]
 ::
 ++  geojson-point
   |=  p=point
@@ -273,9 +282,20 @@
   ?>  ?=([%o *] gjo)
   :: Extract the type field and parse as needed
   =/  typ=@t  (so (~(got by p.gjo) 'type'))
+  :: TODO: case insensitivity?
   ?+  typ  ~|([%unknown-geojson-type typ] !!)
     %'Feature'  (feature-create gjo)
     %'FeatureCollection'  (feature-collection-create gjo)
+    %'LineString'  (geometry-create gjo)
+  ==
+::
+++  geometry-create
+  |=  =json
+  =/  geometry  (dejs-geometry json)
+  =/  content  (content [%geometry geometry])
+  :-  [%give %fact ~[/atlas] %content !>(content)]~
+  %=  state
+    data  content
   ==
 ::
 ++  feature-collection-create
@@ -337,7 +357,7 @@
   (fid (some json))
 ::
 ++  dejs-geometry
-  =,  dejs:format
+  :: =,  dejs:format
   |=  =json
   ^-  geometry
   ?>  ?=([%o *] json)
