@@ -267,28 +267,49 @@
   |=  gj=@t
   ^-  (quip card _state)
   ~&  'geojson create next gen'
-  ::  de-json:html returns a unit, so use 'need' to get past ~
-  =/  jsonobject  (need (de-json:html gj))
-  ::?+  typ  ~|([%unknown-geometry typ] !!)
+  ::  de-json:html returns a unit, so use 'need' to get json
+  =/  gjo  (need (de-json:html gj))
+  ::  Check if is of json object form, otherwise can't pull apart
+  ?>  ?=([%o *] gjo)
+  :: Extract the type field and parse as needed
+  =/  typ=@t  (so (~(got by p.gjo) 'type'))
+  ?+  typ  ~|([%unknown-geojson-type typ] !!)
+    %'Feature'  (feature-create gjo)
+    %'FeatureCollection'  (feature-collection-create gjo)
+  ==
+::
+++  feature-collection-create
+  |=  =json
+  =/  uncast  (dejs-featurecollection json)
+  ~&  uncast
+  =/  featurecollection  (featurecollection uncast)
+  =/  content  (content [%featurecollection featurecollection])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
+  %=  state
+    data  content
+  ==
+::
+++  feature-create
+  |=  jsonobject=json
   =/  uncastfeature  (dejs-feature jsonobject)
-  ~&  'uncast'
-  ~&  uncastfeature
   =/  feature  (feature uncastfeature)
-  ~&  'cast'
-  ~&  feature
-  ::=/  features  (weld data ~[feature])
   =/  content  (content [%feature feature])
   :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
   %=  state
     data  content
   ==
 ::
-::++  dejs-gom
-::  [%feature om]
+++  dejs-featurecollection
+  |=  =json
+  ?>  ?=([%o *] json)
+  =/  features-js  (need (~(get by p.json) 'features'))
+  ?>  ?=([%a *] features-js)
+  =/  features  ((list feature) (turn p.features-js dejs-feature))
+  ~&  features
+  features
 ::
 ++  dejs-feature
   |=  =json
-  ~&  +2.json
   ?>  ?=([%o *] json)
   =/  fidob  (~(get by p.json) 'id')
   ?~  fidob
@@ -297,22 +318,14 @@
 ::
 ++  dejs-feature-fidless
   |=  =json
-  ::%-  ot
-  ::(weld (dejs-feature-core json) ~[[%o ~]])
   ?>  ?=([%o *] json)
   =/  geomob  (dejs-geometry (need (~(get by p.json) 'geometry')))
   =/  propsob  (need (~(get by p.json) 'properties'))
   =/  fidob  ~
   =/  core  ~[geomob propsob fidob]
   core
-  ::==
-++  dejs-feature-core
-  :~  [%geometry dejs-geometry]
-      [%properties json]
-  ==
 ::
 ++  dejs-feature-fid
-  ::^-  feature
   %-  ot
     :~  [%geometry dejs-geometry]
         [%properties json]
