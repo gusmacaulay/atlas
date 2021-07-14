@@ -287,6 +287,8 @@
     %'Feature'  (feature-create gjo)
     %'FeatureCollection'  (feature-collection-create gjo)
     %'LineString'  (geometry-create gjo)
+    %'Polygon'  (geometry-create gjo)
+    %'Point'  (geometry-create gjo)
   ==
 ::
 ++  geometry-create
