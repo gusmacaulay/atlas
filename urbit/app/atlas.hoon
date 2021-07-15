@@ -146,7 +146,6 @@
   (geojson-geometry (geometry geocontent))
   ==
 ::
-::
 ++  geojson-featurecollection
   |=  fc=featurecollection
   ^-  json
@@ -192,6 +191,8 @@
    (geojson-polygon ((list linearring) geom.anygeom))
     %linestring
    (geojson-linestring (linestring geom.anygeom))
+    %multipoint
+   (geojson-multipoint (multipoint geom.anygeom))
   ==
   ::(geojson-polygon ((list linearring) geom.particular))
  :: =/  gjtype  (tape:enjs "Polygon")
@@ -218,38 +219,41 @@
   ^-  json
   =/  type  (tape:enjs "LineString")
   :: A linearring and a linestring are the same* thing
-  :: * a linearring actually has matching start and end coords
-  :: but that isn't validated here
   (pairs:enjs ~[[%coordinates (geojson-linearring l)] [%type type]])
-
 ::
+:: This should probably be called a coordlist or something
+:: since it's working as linestring and multipoint as well
+:: ... *a linearring actually has matching start and end coords
+:: but that isn't validated here
 ++  geojson-linearring
   |=  l=linearring
   ^-  json
   =/  coords  ((list coord) ?~(l ~ l))
-  =/  jring  (turn coords geojson-coord)::geojson-point)
+  =/  jring  (turn coords geojson-coord)
   =/  gjr  [%a jring]
   gjr
+::
+++  geojson-multipoint
+  |=  mp=multipoint
+  ^-  json
+  =/  type  (tape:enjs "MultiPoint")
+  (pairs:enjs ~[[%coordinates (geojson-linearring mp)] [%type type]])
+::
+++  geojson-point
+  |=  p=point
+  ^-  json
+  =/  c  ~[lon.coord.p lat.coord.p]
+  =/  ca  (turn c reald)
+  =/  gjc  [%a ca]
+  =/  type  (tape:enjs "Point")
+  =/  gj  (pairs:enjs ~[[%coordinates gjc] [%type type]])
+  gj
 ::
 ++  geojson-coord
   |=  =coord
   =/  c  ~[lon.coord lat.coord]
   =/  ca  (turn c reald)
   [%a ca]
-::
-++  geojson-point
-  |=  p=point
-  ^-  json
-  ::    ~&  ~[(anynumb lon.p) (anynumb lat.p)]
-  ::=/  c  (coord geom.+3.g)
-  =/  c  ~[lon.coord.p lat.coord.p]
-  =/  ca  (turn c reald)
-  ::  ~&  ca
-  =/  gjc  [%a ca]
-  =/  type  (tape:enjs "Point")
-  =/  gj  (pairs:enjs ~[[%coordinates gjc] [%type type]])
-  gj
-::
 :: How does any of this work?! what does it mean!!
 ++  reald
   |=  a=@rd
@@ -289,6 +293,7 @@
     %'LineString'  (geometry-create gjo)
     %'Polygon'  (geometry-create gjo)
     %'Point'  (geometry-create gjo)
+    %'MultiPoint'  (geometry-create gjo)
   ==
 ::
 ++  geometry-create
@@ -359,18 +364,15 @@
   (fid (some json))
 ::
 ++  dejs-geometry
-  :: =,  dejs:format
   |=  =json
   ^-  geometry
   ?>  ?=([%o *] json)
-  :: ~&  '====='
-  :: ~&  json
-  :: ~&  '====='
   =/  typ=@t  (so (~(got by p.json) 'type'))
   ?+  typ  ~|([%unknown-geometry typ] !!)
       %'Polygon'  (dejs-polygon json)
       %'Point'  (dejs-point json)
       %'LineString'  (dejs-linestring json)
+      %'MultiPoint'  (dejs-multipoint json)
   ==
 ::
 ++  dejs-coord
@@ -383,7 +385,6 @@
   ?>  ?=([%o *] json)
   %-  (ar dejs-coord)
   (~(got by p.json) 'coordinates')
-  ::(turn p.(~(got by p.json) 'coordinates') dejs-coord)
 ::
 ++  dejs-point
   |=  =json
@@ -393,13 +394,19 @@
   %-  dejs-coord
   (~(got by p.json) 'coordinates')
 ::
+++  dejs-multipoint
+  |=  =json
+  ^-  geometry
+  ?>  ?=([%o *] json)
+  :-  %multipoint
+  %-  (ar dejs-coord)
+  (~(got by p.json) 'coordinates')
+::
 ++  dejs-polygon
   |=  =json
   ^-  geometry
   :-  %polygon
   ?>  ?=([%o *] json)
-  ~&  'POLYGON!!'
-  ~&  p.json
   %-  (ar (ar dejs-coord))
   (~(got by p.json) 'coordinates')
 ::

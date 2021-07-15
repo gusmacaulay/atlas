@@ -14,6 +14,22 @@ These are derived from geosjonlint.com, use ```:atlas|pleasant``` to render the 
     ]
 }'
 ```
+### MultiPoint
+```
+:atlas|geojson-create '{
+    "type": "MultiPoint",
+    "coordinates": [
+        [
+            -105.01621,
+            39.57422
+        ],
+        [
+            -80.666513,
+            35.053994
+        ]
+    ]
+}'
+```
 ### Linestring
 
 ```
