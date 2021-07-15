@@ -186,7 +186,7 @@ class OLMapFragment extends React.Component {
         zoom: 2
       })
     });
-    // because I'm reactarded ...
+    // because I'm reactarded? ... or is it gall problem?
     // quick and dirty map refresh technique (turn based?)
     map.on('moveend', function(event) { // eslint-disable-line prefer-arrow-callback
         api.subscribe(subscription);

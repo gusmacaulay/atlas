@@ -39,7 +39,6 @@
     :_  this
     [%give %fact ~ %json !>((fetch-document path))]~
   ==
-  ::(on-watch:def path)
 ::
 ++  on-agent  on-agent:def
 ::
@@ -63,8 +62,8 @@
       (poke-pleasant:cc !<(~ vase))
         %geojson
       (poke-geojson-create:cc !<(@t vase))
-      ::  %json
-      ::(poke-create:cc !<(json vase))
+        %json
+      (poke-geojson-create-js:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
       ::  %update
@@ -90,10 +89,12 @@
   ^-  json
   ~&  'fetch (all) geojson from store'
   =/  jd  (geojson-document data)
+  ~&  jd
   ::  DEBUG
-  ::  =/  jason  (en-json:html jd)
-  ::  ~&  'JSON rendered'
-  ::  ~&  jason
+  =/  jason  (en-json:html jd)
+  ~&  'JSON rendered'
+  ~&  jason
+  ::jason
   jd
 
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
@@ -159,18 +160,12 @@
 ++  geojson-feature
   |=  f=feature
   ^-  json
-  :: ~&  geometry.f
   =/  jg  (geojson-geometry geometry.f)
   =/  gjtype  (tape:enjs "Feature")
-  ::=/  fid  (numb:enjs fid.f)
-  ::=/  fid  `unit`[~ fid.f]
   =/  fid  fid.f
-  ~&  fid
   ?~  (need fid)
     (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f]])
   =/  fidjs  (need fid)
-  ::frond:enjs ['type' 'point']]
-  ::(frond:enjs ['geometry' jg])
   =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f] [%id fidjs]])
   jf
 ::
@@ -264,9 +259,9 @@
   |-  ^-  ^tape
   (slag 2 (scow %rd a))
 ::
-++  poke-create
+++  poke-geojson-create-js
   |=  gj=json
-  ::  ~&  'poke json create'
+  ~&  'poke json format create'
   ::  ~&  gj
   =/  feature  (feature (dejs-feature gj))
   ::  ~&  feature
@@ -280,7 +275,7 @@
 ++  poke-geojson-create
   |=  gj=@t
   ^-  (quip card _state)
-  ~&  'geojson create next gen'
+  ~&  'GEOJSON POKE'
   ::  de-json:html returns a unit, so use 'need' to get json
   =/  gjo  (need (de-json:html gj))
   ::  Check if is of json object form, otherwise can't pull apart
