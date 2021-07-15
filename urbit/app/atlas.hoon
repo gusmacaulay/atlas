@@ -189,17 +189,9 @@
    (geojson-linestring (linestring geom.anygeom))
     %multipoint
    (geojson-multipoint (multipoint geom.anygeom))
+    %multilinestring
+   (geojson-multilinestring (multilinestring geom.anygeom))
   ==
-  ::(geojson-polygon ((list linearring) geom.particular))
- :: =/  gjtype  (tape:enjs "Polygon")
-::  =/  llc  ((list linearring) geom.+3.g)
-::  =/  jc  (geojson-polygon llc)
-  :: =/  c  (coord ?~(coords ~ i.coords))
-  :: =/  gjtype  (tape:enjs "Point")
-  :: =/  c  (coord geom.+3.g)
-  ::=/  jc  (geojson-point c)
-::  =/  gj  (pairs:enjs ~[[%coordinates jc] [%type gjtype]])
-::  gj
 ::
 ++  geojson-polygon
   |=  lr=(list linearring)
@@ -208,6 +200,15 @@
   =/  gjrings  [%a gjring]
   =/  type  (tape:enjs "Polygon")
   =/  gj  (pairs:enjs ~[[%coordinates gjrings] [%type type]])
+  gj
+::
+++  geojson-multilinestring
+  |=  ml=multilinestring
+  ^-  json
+  =/  gjlines  (turn ((list linearring) ml) geojson-linearring)
+  =/  gjlinesob  [%a gjlines]
+  =/  type  (tape:enjs "MultiLineString")
+  =/  gj  (pairs:enjs ~[[%coordinates gjlinesob] [%type type]])
   gj
 ::
 ++  geojson-linestring
@@ -282,11 +283,12 @@
   ?>  ?=([%o *] gjo)
   :: Extract the type field and parse as needed
   =/  typ=@t  (so (~(got by p.gjo) 'type'))
-  :: TODO: case insensitivity?
+  :: TODO: case insensitivity? check geojson spec.
   ?+  typ  ~|([%unknown-geojson-type typ] !!)
     %'Feature'  (feature-create gjo)
     %'FeatureCollection'  (feature-collection-create gjo)
     %'LineString'  (geometry-create gjo)
+    %'MultiLineString'  (geometry-create gjo)
     %'Polygon'  (geometry-create gjo)
     %'Point'  (geometry-create gjo)
     %'MultiPoint'  (geometry-create gjo)
@@ -387,6 +389,7 @@
       %'Polygon'  (dejs-polygon json)
       %'Point'  (dejs-point json)
       %'LineString'  (dejs-linestring json)
+      %'MultiLineString'  (dejs-multilinestring json)
       %'MultiPoint'  (dejs-multipoint json)
   ==
 ::
@@ -399,6 +402,14 @@
   :-  %linestring
   ?>  ?=([%o *] json)
   %-  (ar dejs-coord)
+  (~(got by p.json) 'coordinates')
+::
+++  dejs-multilinestring
+  |=  =json
+  ^-  geometry
+  :-  %multilinestring
+  ?>  ?=([%o *] json)
+  %-  (ar (ar dejs-coord))
   (~(got by p.json) 'coordinates')
 ::
 ++  dejs-point
@@ -425,49 +436,5 @@
   %-  (ar (ar dejs-coord))
   (~(got by p.json) 'coordinates')
 ::
-++  dejs-geometry-alt
-  |=  =json
-  ^-  geometry
-  ~&  'point json'
-  ~&  json
-  =/  jsmap  +3:json
-  =/  p  p.jsmap
-  ~&  p
-  ::~&  (~(got by json) 'coordinates')
-  (geometry (point json))
-  ::
-  ::(geometry (point ~(got by json) 'coordinates'))
-::
-::  Poke feature, adds a feature to our featurecollection (the store, for now)
-::++  poke-feature
-::  |=  f=feature
-::  ^-  (quip card _state)
-::  :: =/  features  (weld data ~[f])
-::  :-  [%give %fact ~[/atlas] %featurecollect !>(f)]~
-::  %=  state
-::    data  f
-::  ==
+:: Hello neighbour, did you really read all my code? or did you skip to the end?
 --
-::
-::  Poke geom deprecated
-::++  poke-geom
-::  |=  g=geometry
-::  ^-  (quip card _state)
-::  ~&  'in poke-geom (geom)'
-::  ~&  data
-::  :-  [%give %fact ~[/atlas] %geometry !>(g)]~
-::  %=  state
-::    data  g
-::  ==
-::--
-::
-::++  poke-json
-::  |=  jon=json
-::  ^-  (quip card _state)
-::  ~&  'in poke-json'
-::  ~&  jon
-::  :-  [%give %fact ~[/atlas] %json !>(jon)]~
-::  %=  state
-::    data  jon
-::  ==
-::--
