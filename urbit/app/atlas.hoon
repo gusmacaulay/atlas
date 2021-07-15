@@ -191,6 +191,8 @@
    (geojson-multipoint (multipoint geom.anygeom))
     %multilinestring
    (geojson-multilinestring (multilinestring geom.anygeom))
+    %multipolygon
+   (geojson-multipolygon (multipolygon geom.anygeom))
   ==
 ::
 ++  geojson-polygon
@@ -201,6 +203,19 @@
   =/  type  (tape:enjs "Polygon")
   =/  gj  (pairs:enjs ~[[%coordinates gjrings] [%type type]])
   gj
+::
+++  geojson-multipolygon
+  |=  mp=(list (list linearring))
+  ^-  json
+  =/  gjpolygons  (turn mp polygon-partial)
+  =/  gjpolygonsob  [%a gjpolygons]
+  =/  type  (tape:enjs "MultiPolygon")
+  =/  gj  (pairs:enjs ~[[%coordinates gjpolygonsob] [%type type]])
+  gj
+::
+++  polygon-partial
+  |=  lr=(list linearring)
+  [%a (turn lr geojson-linearring)]
 ::
 ++  geojson-multilinestring
   |=  ml=multilinestring
@@ -292,6 +307,7 @@
     %'Polygon'  (geometry-create gjo)
     %'Point'  (geometry-create gjo)
     %'MultiPoint'  (geometry-create gjo)
+    %'MultiPolygon'  (geometry-create gjo)
     %'GeometryCollection'  (geometry-collection-create gjo)
   ==
 ::
@@ -391,6 +407,7 @@
       %'LineString'  (dejs-linestring json)
       %'MultiLineString'  (dejs-multilinestring json)
       %'MultiPoint'  (dejs-multipoint json)
+      %'MultiPolygon'  (dejs-multipolygon json)
   ==
 ::
 ++  dejs-coord
@@ -436,5 +453,15 @@
   %-  (ar (ar dejs-coord))
   (~(got by p.json) 'coordinates')
 ::
+++  dejs-multipolygon
+  |=  =json
+  ^-  geometry
+  :-  %multipolygon
+  ?>  ?=([%o *] json)
+  %-  (ar (ar (ar dejs-coord)))
+  (~(got by p.json) 'coordinates')
+::
 :: Hello neighbour, did you really read all my code? or did you skip to the end?
+:: Please join my urbit GIS and cartography group if you want to know more
+:: ~lomped-firser/areography
 --
