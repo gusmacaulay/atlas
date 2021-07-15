@@ -70,8 +70,7 @@
 ::  Geometrycollection for GeoJSON
 ::  TODO: check if id is needed here
 +$  geometrycollection
-  $:  =id
-      geom=(list geometry)
+  $:  geometries=(list geometry)
   ==
 ::  GeoJSON Feature Type
 ::  A geometry with properties (key:value pairs)

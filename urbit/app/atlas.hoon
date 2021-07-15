@@ -144,21 +144,16 @@
   (geojson-feature (feature geocontent))
     %geometry
   (geojson-geometry (geometry geocontent))
+    %geometrycollection
+  (geojson-geometrycollection (geometrycollection geocontent))
   ==
 ::
 ++  geojson-featurecollection
   |=  fc=featurecollection
   ^-  json
-  :: =/  count  (lent fc)
-  :: ~&  'There are'  ~&  count  ~&  'features in the store'
   =/  fcj  [%a ?~(fc ~ (turn `(list feature)`fc geojson-feature))]
-  ::~&  fcj
   =/  gjtype  (tape:enjs "FeatureCollection")
-  ::[(frond:enjs ['type' gjtype]) (frond:enjs ['features' fcj]) ~])
-  ::(pairs:enjs `(list [@t json])`[["type" gjtype] ["features" fcj] ~])
-  ::`(list [@t json])` ([["type" gjtype] ["features" fcj] ~])
   =/  gjobj  (pairs:enjs ~[[%type gjtype] [%features fcj]])
-  ::~&  gjobj
   gjobj
 ::
 ++  geojson-feature
@@ -178,6 +173,12 @@
   ::(frond:enjs ['geometry' jg])
   =/  jf  (pairs:enjs ~[[%type gjtype] [%geometry jg] [%properties properties.f] [%id fidjs]])
   jf
+::
+++  geojson-geometrycollection
+  |=  gc=geometrycollection
+  ^-  json
+  =/  gcj  [%a ?~(gc ~ (turn geometries.gc geojson-geometry))]
+  (pairs:enjs ~[[%type (tape:enjs "GeometryCollection")] [%geometries gcj]])
 ::
 ++  geojson-geometry
   |=  g=geometry
@@ -294,6 +295,16 @@
     %'Polygon'  (geometry-create gjo)
     %'Point'  (geometry-create gjo)
     %'MultiPoint'  (geometry-create gjo)
+    %'GeometryCollection'  (geometry-collection-create gjo)
+  ==
+::
+++  geometry-collection-create
+  |=  =json
+  =/  geometrycollection  (dejs-geometrycollection json)
+  =/  content  (content [%geometrycollection geometrycollection])
+  :-  [%give %fact ~[/atlas] %content !>(content)]~
+  %=  state
+    data  content
   ==
 ::
 ++  geometry-create
@@ -362,6 +373,15 @@
 ++  dejs-fid
   |=  =json
   (fid (some json))
+::
+++  dejs-geometrycollection
+  |=  =json
+  ^-  geometrycollection
+  ?>  ?=([%o *] json)
+  =/  collection-js  (need (~(get by p.json) 'geometries'))
+  ?>  ?=([%a *] collection-js)
+  =/  geometries  (geometrycollection (turn p.collection-js dejs-geometry))
+  geometries
 ::
 ++  dejs-geometry
   |=  =json
