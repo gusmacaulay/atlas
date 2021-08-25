@@ -27,6 +27,7 @@ import { SubscriptionRequestInterface } from '@urbit/http-api';
 const source = new VectorSource();
 const format = new GeoJSON();
 const vector = new VectorLayer({
+  projection: 'EPSG:4326',
   source: source,
   style: new Style({
     fill: new Fill({
@@ -51,12 +52,12 @@ const handleEvent = (message: any): void => {
       // presently, getting the whole geojson document and reloading
       // I *think* openlayers is clever about how it re-renders
       // but neverthless, in the long run should ideally only be sync diffs
-      // alert('handleEvent; refreshing map');
       const format = new GeoJSON();
       const featuresFormatted = format.readFeatures(message);
       // nothing up my sleeve
       vector.getSource().clear();
       vector.getSource().addFeatures(featuresFormatted);
+      // vector.getMap().zoomToExtent(vector.getDataExtent());
       //
 };
 
@@ -72,6 +73,7 @@ const subscription: SubscriptionRequestInterface = {
 // so it returns the same authenticated, subscribed instance every time
 const CreateApi = _.memoize(
   (): UrbitInterface => {
+    // TODO: Prompt for connection details
     const urb = new Urbit('http://localhost:8081', 'lidlut-tabwed-pillex-ridrup');
     urb.ship = 'zod';
     urb.onError = message => console.log(message); // Just log errors if we get any
@@ -179,9 +181,10 @@ class OLMapFragment extends React.Component {
           source: source
         })
       ]),
-      // Render the tile layers in a map view with a Mercator projection
+      // Render the tile layers in a map view with a WGS84 based Projection
+      // Strict geojson is wgs84 only
       view: new View({
-        projection: 'EPSG:3857',
+        projection: 'EPSG:4326',
         center: [0, 0],
         zoom: 2
       })
