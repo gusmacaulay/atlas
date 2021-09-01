@@ -10,7 +10,7 @@
   ==
 ::+$  state-zero  [%0 data=(list feature)]
 :: TODO: near term this should be list of document
-+$  state-zero  [%0 data=fridge]
++$  state-zero  [%0 store=fridge]
 --
 =|  state-zero
 =*  state  -
@@ -89,7 +89,7 @@
   |=  =path
   ^-  json
   ~&  'fetch (all) geojson from store'
-  =/  doc  (need (~(get by documents.data) 0))
+  =/  doc  (need (~(get by documents.store) 0))
   =/  jd  (geojson-document content.doc)
   :: =/  jd  (geojson-document data)
   ~&  jd
@@ -107,7 +107,7 @@
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
-  =/  doc  (need (~(get by documents.data) 0))
+  =/  doc  (need (~(get by documents.store) 0))
   =/  jd  (geojson-document content.doc)
   ::=/  jd  (geojson-document data)
   ::=/  jason  (en-json:html jd)
@@ -125,7 +125,7 @@
   =/  contents  (fridge 1 ~[document])
   :-  [%give %fact ~[/atlas] %content !>(contents)]~
   %=  state
-    data  contents
+    store  contents
   ==
 ::
 ::  Update Operation, deletes and replaces document with input GeoJSON
@@ -138,7 +138,7 @@
   =/  features  ~[feature]
   :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
   %=  state
-    data  features
+    store  features
   ==
 ::
 ++  geojson-document
@@ -293,11 +293,7 @@
   ::=/  features  (weld data ~[feature])
   =/  content  (content [%feature feature])
   =/  document  (document 0 content)
-  =/  contents  (fridge 1 ~[document])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(contents)]~
-  %=  state
-    data  contents
-  ==
+  (fridge-update document)
 ::
 ++  poke-geojson-create
   |=  gj=@t
@@ -327,11 +323,7 @@
   =/  geometrycollection  (dejs-geometrycollection json)
   =/  content  (content [%geometrycollection geometrycollection])
   =/  document  (document 0 content)
-  =/  contents  (fridge 1 ~[document])
-  :-  [%give %fact ~[/atlas] %content !>(contents)]~
-  %=  state
-    data  contents
-  ==
+  (fridge-create document)
 ::
 ++  geometry-create
   |=  =json
@@ -339,11 +331,7 @@
   =/  content  (content [%geometry geometry])
   ::=/  contents  (weld ~[content] data)
   =/  document  (document 0 content)
-  =/  contents  (fridge 1 ~[document])
-  :-  [%give %fact ~[/atlas] %content !>(contents)]~
-  %=  state
-    data  contents
-  ==
+  (fridge-create document)
 ::
 ++  feature-collection-create
   |=  =json
@@ -352,11 +340,7 @@
   =/  featurecollection  (featurecollection uncast)
   =/  content  (content [%featurecollection featurecollection])
   =/  document  (document 0 content)
-  =/  contents  (fridge 1 ~[document])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(contents)]~
-  %=  state
-    data  contents
-  ==
+  (fridge-create document)
 ::
 ++  feature-create
   |=  jsonobject=json
@@ -364,12 +348,29 @@
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
   =/  document  (document 0 content)
-  =/  docs  (~(put by documents.data) id.document document)
-  ~&  docs
-  =/  contents  (fridge 1 docs)
-  :-  [%give %fact ~[/atlas] %featurecollect !>(contents)]~
+  (fridge-create document)
+::
+:: update is just delete + create with specified id
+++  fridge-update
+  |=  =document
+  =/  deleted  (~(del by documents.store) id.document)
+  =/  updated  (~(put by deleted) id.document document)
+  =/  contents  (fridge 1 updated)
+  :: TODO: whats actually going on here, what does %document do/effect?
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
   %=  state
-    data  contents
+    store  contents
+  ==
+
+:: create should increment nextid
+++  fridge-create
+  |=  =document
+  =/  docs  (~(put by documents.store) nextid.store document)
+  =/  contents  (fridge 1 docs)
+  :: TODO: whats actually going on here, what does %document do/effect?
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  %=  state
+    store  contents
   ==
 ::
 ++  dejs-featurecollection
