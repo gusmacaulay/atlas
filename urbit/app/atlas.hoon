@@ -9,7 +9,8 @@
   $%  state-zero
   ==
 ::+$  state-zero  [%0 data=(list feature)]
-+$  state-zero  [%0 data=content]
+:: TODO: near term this should be list of document
++$  state-zero  [%0 data=fridge]
 --
 =|  state-zero
 =*  state  -
@@ -88,12 +89,16 @@
   |=  =path
   ^-  json
   ~&  'fetch (all) geojson from store'
-  =/  jd  (geojson-document data)
+  =/  doc  (need (~(get by documents.data) 0))
+  =/  jd  (geojson-document content.doc)
+  :: =/  jd  (geojson-document data)
   ~&  jd
   ::  DEBUG
   =/  jason  (en-json:html jd)
   ~&  'JSON rendered'
   ~&  jason
+  ~&  'THE PATH'
+  ~&  path
   ::jason
   jd
 
@@ -102,7 +107,9 @@
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
-  =/  jd  (geojson-document data)
+  =/  doc  (need (~(get by documents.data) 0))
+  =/  jd  (geojson-document content.doc)
+  ::=/  jd  (geojson-document data)
   ::=/  jason  (en-json:html jd)
   ~&  (crip (en-json:html jd))
   [~ state]
@@ -114,9 +121,11 @@
   ::=/  features  (oust [0 1] data)
   ~&  'deleted document'
   =/  content  [%empty ~]
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
+  =/  document  (document 0 content)
+  =/  contents  (fridge 1 ~[document])
+  :-  [%give %fact ~[/atlas] %content !>(contents)]~
   %=  state
-    data  content
+    data  contents
   ==
 ::
 ::  Update Operation, deletes and replaces document with input GeoJSON
@@ -283,9 +292,11 @@
   ::  ~&  feature
   ::=/  features  (weld data ~[feature])
   =/  content  (content [%feature feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
+  =/  document  (document 0 content)
+  =/  contents  (fridge 1 ~[document])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(contents)]~
   %=  state
-    data  content
+    data  contents
   ==
 ::
 ++  poke-geojson-create
@@ -315,18 +326,23 @@
   |=  =json
   =/  geometrycollection  (dejs-geometrycollection json)
   =/  content  (content [%geometrycollection geometrycollection])
-  :-  [%give %fact ~[/atlas] %content !>(content)]~
+  =/  document  (document 0 content)
+  =/  contents  (fridge 1 ~[document])
+  :-  [%give %fact ~[/atlas] %content !>(contents)]~
   %=  state
-    data  content
+    data  contents
   ==
 ::
 ++  geometry-create
   |=  =json
   =/  geometry  (dejs-geometry json)
   =/  content  (content [%geometry geometry])
-  :-  [%give %fact ~[/atlas] %content !>(content)]~
+  ::=/  contents  (weld ~[content] data)
+  =/  document  (document 0 content)
+  =/  contents  (fridge 1 ~[document])
+  :-  [%give %fact ~[/atlas] %content !>(contents)]~
   %=  state
-    data  content
+    data  contents
   ==
 ::
 ++  feature-collection-create
@@ -335,9 +351,11 @@
   ~&  uncast
   =/  featurecollection  (featurecollection uncast)
   =/  content  (content [%featurecollection featurecollection])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
+  =/  document  (document 0 content)
+  =/  contents  (fridge 1 ~[document])
+  :-  [%give %fact ~[/atlas] %featurecollect !>(contents)]~
   %=  state
-    data  content
+    data  contents
   ==
 ::
 ++  feature-create
@@ -345,9 +363,13 @@
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
+  =/  document  (document 0 content)
+  =/  docs  (~(put by documents.data) id.document document)
+  ~&  docs
+  =/  contents  (fridge 1 docs)
+  :-  [%give %fact ~[/atlas] %featurecollect !>(contents)]~
   %=  state
-    data  content
+    data  contents
   ==
 ::
 ++  dejs-featurecollection
@@ -356,7 +378,7 @@
   =/  features-js  (need (~(get by p.json) 'features'))
   ?>  ?=([%a *] features-js)
   =/  features  ((list feature) (turn p.features-js dejs-feature))
-  ~&  features
+  ::  ~&  features
   features
 ::
 ++  dejs-feature
