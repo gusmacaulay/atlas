@@ -35,8 +35,11 @@
   |=  =path
   ^-  (quip card _this)
   ~&  'any on-watch '
+  ::=/  base  `path`(snag 0 path)
+  ::=/  id  (snag 1 path)
+  ::=/  id
   ?+    path  (on-watch:def path)
-      [%portal ~]
+      [%fridge *]
     :_  this
     [%give %fact ~ %json !>((fetch-document path))]~
   ==
@@ -84,12 +87,13 @@
 |_  bol=bowl:gall
 ::
 ::
-::
+:: Grab the geojson document specified by id in path eg. /fridge/0
 ++  fetch-document
   |=  =path
   ^-  json
-  ~&  'fetch (all) geojson from store'
-  =/  doc  (need (~(get by documents.store) 0))
+  =/  id  `@ud`(slav %ud (snag 1 path))
+  ~&  id
+  =/  doc  (need (~(get by documents.store) id))
   =/  jd  (geojson-document content.doc)
   :: =/  jd  (geojson-document data)
   ~&  jd
