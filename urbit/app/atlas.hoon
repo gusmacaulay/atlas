@@ -104,16 +104,21 @@
 
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
+::  TODO: move this code in to the generator, which should fetch json from atlas
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
-  =/  doc  (need (~(get by documents.store) 0))
-  =/  jd  (geojson-document content.doc)
-  ::=/  jd  (geojson-document data)
-  ::=/  jason  (en-json:html jd)
-  ~&  (crip (en-json:html jd))
+  ::=/  doc  (need (~(get by documents.store) 0))
+  ::=/  jd  (geojson-document content.doc)
+  ::[(print-doc (need (~(get by documents.store) 0))) state]
+  =/  printed  (~(run by documents.store) print-doc)
   [~ state]
 ::
+++  print-doc
+  |=  =document
+  =/  jd  (geojson-document content.document)
+  ~&  (crip (en-json:html jd))
+  document
 ::  Delete operation, removes feature from the store
 ++  poke-delete
   |=  *
@@ -129,6 +134,7 @@
   ==
 ::
 ::  Update Operation, deletes and replaces document with input GeoJSON
+::  deprecated
 ++  poke-update
   |=  gj=json
   ~&  'poke update'
@@ -366,7 +372,7 @@
 ++  fridge-create
   |=  =document
   =/  docs  (~(put by documents.store) nextid.store document)
-  =/  contents  (fridge 1 docs)
+  =/  contents  (fridge (add 1 nextid.store) docs)
   :: TODO: whats actually going on here, what does %document do/effect?
   :-  [%give %fact ~[/atlas] %document !>(contents)]~
   %=  state
