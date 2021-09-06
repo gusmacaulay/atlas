@@ -91,21 +91,18 @@
 ++  fetch-document
   |=  =path
   ^-  json
+  :: TODO: is there a way to template these paths, below seems hacky
   =/  id  (slav %ud (snag 1 path))
-  ~&  id
+  ?:  ?=(~(has by documents.store) id)
+    (fetch-actual id)
+  ~
+++  fetch-actual
+  |=  =id
   =/  doc  (need (~(get by documents.store) id))
+  ~&  doc
   =/  jd  (geojson-document content.doc)
-  :: =/  jd  (geojson-document data)
-  ~&  jd
-  ::  DEBUG
-  =/  jason  (en-json:html jd)
-  ~&  'JSON rendered'
-  ~&  jason
-  ~&  'THE PATH'
-  ~&  path
-  ::jason
+  ::=/  jason  (en-json:html jd)
   jd
-
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
 ::  TODO: move this code in to the generator, which should fetch json from atlas
@@ -123,33 +120,21 @@
   =/  jd  (geojson-document content.document)
   ~&  (crip (en-json:html jd))
   document
-::  Delete operation, removes feature from the store
-++  poke-delete
-  |=  *
-  ^-  (quip card _state)
-  ::=/  features  (oust [0 1] data)
-  ~&  'deleted document'
-  =/  content  [%empty ~]
-  =/  document  (document 0 content)
-  =/  contents  (fridge 1 ~[document])
-  :-  [%give %fact ~[/atlas] %content !>(contents)]~
-  %=  state
-    store  contents
-  ==
 ::
-::  Update Operation, deletes and replaces document with input GeoJSON
-::  deprecated
-++  poke-update
-  |=  gj=json
-  ~&  'poke update'
-  ~&  gj
-  =/  feature  (feature (dejs-feature gj))
-  ~&  feature
-  =/  features  ~[feature]
-  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
-  %=  state
-    store  features
-  ==
+++  poke-geojson-update
+  |=  =json
+  =/  update  (update (dejs-update json))
+  =/  feature  (feature (dejs-feature geojson.update))
+  =/  content  (content [%feature feature])
+  =/  document  (document id.update content)
+  (fridge-update document)
+::  Delete operation, removes document from the store
+++  poke-delete
+  |=  =json
+  ^-  (quip card _state)
+  =/  id  (id (dejs-id json))
+  ~&  id
+  (fridge-delete id)
 ::
 ++  geojson-document
   |=  =content
@@ -294,20 +279,16 @@
   |-  ^-  ^tape
   (slag 2 (scow %rd a))
 ::
-++  poke-geojson-update
-  |=  =json
-  =/  update  (update (dejs-update json))
-  =/  feature  (feature (dejs-feature geojson.update))
-  =/  content  (content [%feature feature])
-  =/  document  (document id.update content)
-  (fridge-update document)
-::
 ++  dejs-update
 %-  ot
   :~  [%id ne]
       [%geojson json]
 ==
 ::
+++  dejs-id
+%-  ot
+  :~  [%id ne]
+==
 ++  poke-geojson-create
   |=  gj=@t
   ^-  (quip card _state)
@@ -363,19 +344,26 @@
   =/  document  (document 0 content)
   (fridge-create document)
 ::
+++  fridge-delete
+  |=  =id
+  =/  deleted  (~(del by documents.store) id)
+  =/  contents  (fridge nextid.store deleted)
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  %=  state
+    store  contents
+  ==
 :: update is just delete + create with specified id
 ++  fridge-update
   |=  =document
   =/  deleted  (~(del by documents.store) id.document)
   =/  updated  (~(put by deleted) id.document document)
-  =/  contents  (fridge 1 updated)
+  =/  contents  (fridge nextid.store updated)
   :: TODO: whats actually going on here, what does %document do/effect?
   :-  [%give %fact ~[/atlas] %document !>(contents)]~
   %=  state
     store  contents
   ==
-
-:: create should increment nextid
+:: create, TODO: this should not be mixed up in the geojson building stuff
 ++  fridge-create
   |=  =document
   =/  docs  (~(put by documents.store) nextid.store document)

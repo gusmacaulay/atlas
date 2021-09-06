@@ -119,7 +119,7 @@
 ::  Actions, for on-poke, ties in with mar/crud.hoon
 ::  following patter from gall guide poketime example
 +$  action
-  $%  [%delete ~]
+  $%  [%delete id]
       [%pleasant ~]
       [%update update]
   ==

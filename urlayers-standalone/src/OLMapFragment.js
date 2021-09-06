@@ -53,10 +53,13 @@ const handleEvent = (message: any): void => {
       // I *think* openlayers is clever about how it re-renders
       // but neverthless, in the long run should ideally only be sync diffs
       const format = new GeoJSON();
-      const featuresFormatted = format.readFeatures(message);
       // nothing up my sleeve
       vector.getSource().clear();
+      if (message != null) {
+      const featuresFormatted = format.readFeatures(message);
+
       vector.getSource().addFeatures(featuresFormatted);
+      }
     // console.log(vector.getDataExtent());
       //
 };
@@ -142,7 +145,7 @@ class OLMapFragment extends React.Component {
          api.poke({
            app: 'atlas',
            mark: 'delete',
-           json: {}
+           json: { id : 0   }
          }).then(
            api.subscribe(subscription)
           );
