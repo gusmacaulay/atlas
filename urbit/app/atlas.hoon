@@ -9,7 +9,8 @@
   $%  state-zero
   ==
 ::+$  state-zero  [%0 data=(list feature)]
-+$  state-zero  [%0 data=content]
+:: TODO: near term this should be list of document
++$  state-zero  [%0 store=fridge]
 --
 =|  state-zero
 =*  state  -
@@ -34,8 +35,11 @@
   |=  =path
   ^-  (quip card _this)
   ~&  'any on-watch '
+  ::=/  base  `path`(snag 0 path)
+  ::=/  id  (snag 1 path)
+  ::=/  id
   ?+    path  (on-watch:def path)
-      [%portal ~]
+      [%fridge *]
     :_  this
     [%give %fact ~ %json !>((fetch-document path))]~
   ==
@@ -63,7 +67,7 @@
         %geojson
       (poke-geojson-create:cc !<(@t vase))
         %json
-      (poke-geojson-create-js:cc !<(json vase))
+      (poke-geojson-update:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
       ::  %update
@@ -83,54 +87,54 @@
 |_  bol=bowl:gall
 ::
 ::
-::
+:: Grab the geojson document specified by id in path eg. /fridge/0
 ++  fetch-document
   |=  =path
   ^-  json
-  ~&  'fetch (all) geojson from store'
-  =/  jd  (geojson-document data)
-  ~&  jd
-  ::  DEBUG
-  =/  jason  (en-json:html jd)
-  ~&  'JSON rendered'
-  ~&  jason
-  ::jason
+  :: TODO: is there a way to template these paths, below seems hacky
+  =/  id  (slav %ud (snag 1 path))
+  ?:  ?=(~(has by documents.store) id)
+    (fetch-actual id)
+  ~
+++  fetch-actual
+  |=  =id
+  =/  doc  (need (~(get by documents.store) id))
+  ~&  doc
+  =/  jd  (geojson-document content.doc)
+  ::=/  jason  (en-json:html jd)
   jd
-
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
+::  TODO: move this code in to the generator, which should fetch json from atlas
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
-  =/  jd  (geojson-document data)
-  ::=/  jason  (en-json:html jd)
-  ~&  (crip (en-json:html jd))
+  ::=/  doc  (need (~(get by documents.store) 0))
+  ::=/  jd  (geojson-document content.doc)
+  ::[(print-doc (need (~(get by documents.store) 0))) state]
+  =/  printed  (~(run by documents.store) print-doc)
   [~ state]
 ::
-::  Delete operation, removes feature from the store
-++  poke-delete
-  |=  *
-  ^-  (quip card _state)
-  ::=/  features  (oust [0 1] data)
-  ~&  'deleted document'
-  =/  content  [%empty ~]
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
-  %=  state
-    data  content
-  ==
+++  print-doc
+  |=  =document
+  =/  jd  (geojson-document content.document)
+  ~&  (crip (en-json:html jd))
+  document
 ::
-::  Update Operation, deletes and replaces document with input GeoJSON
-++  poke-update
-  |=  gj=json
-  ~&  'poke update'
-  ~&  gj
-  =/  feature  (feature (dejs-feature gj))
-  ~&  feature
-  =/  features  ~[feature]
-  :-  [%give %fact ~[/atlas] %featurecollect !>(features)]~
-  %=  state
-    data  features
-  ==
+++  poke-geojson-update
+  |=  =json
+  =/  update  (update (dejs-update json))
+  =/  feature  (feature (dejs-feature geojson.update))
+  =/  content  (content [%feature feature])
+  =/  document  (document id.update content)
+  (fridge-update document)
+::  Delete operation, removes document from the store
+++  poke-delete
+  |=  =json
+  ^-  (quip card _state)
+  =/  id  (id (dejs-id json))
+  ~&  id
+  (fridge-delete id)
 ::
 ++  geojson-document
   |=  =content
@@ -275,19 +279,16 @@
   |-  ^-  ^tape
   (slag 2 (scow %rd a))
 ::
-++  poke-geojson-create-js
-  |=  gj=json
-  ~&  'poke json format create'
-  ::  ~&  gj
-  =/  feature  (feature (dejs-feature gj))
-  ::  ~&  feature
-  ::=/  features  (weld data ~[feature])
-  =/  content  (content [%feature feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
-  %=  state
-    data  content
-  ==
+++  dejs-update
+%-  ot
+  :~  [%id ne]
+      [%geojson json]
+==
 ::
+++  dejs-id
+%-  ot
+  :~  [%id ne]
+==
 ++  poke-geojson-create
   |=  gj=@t
   ^-  (quip card _state)
@@ -315,19 +316,16 @@
   |=  =json
   =/  geometrycollection  (dejs-geometrycollection json)
   =/  content  (content [%geometrycollection geometrycollection])
-  :-  [%give %fact ~[/atlas] %content !>(content)]~
-  %=  state
-    data  content
-  ==
+  =/  document  (document 0 content)
+  (fridge-create document)
 ::
 ++  geometry-create
   |=  =json
   =/  geometry  (dejs-geometry json)
   =/  content  (content [%geometry geometry])
-  :-  [%give %fact ~[/atlas] %content !>(content)]~
-  %=  state
-    data  content
-  ==
+  ::=/  contents  (weld ~[content] data)
+  =/  document  (document 0 content)
+  (fridge-create document)
 ::
 ++  feature-collection-create
   |=  =json
@@ -335,19 +333,45 @@
   ~&  uncast
   =/  featurecollection  (featurecollection uncast)
   =/  content  (content [%featurecollection featurecollection])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
-  %=  state
-    data  content
-  ==
+  =/  document  (document 0 content)
+  (fridge-create document)
 ::
 ++  feature-create
   |=  jsonobject=json
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
-  :-  [%give %fact ~[/atlas] %featurecollect !>(content)]~
+  =/  document  (document 0 content)
+  (fridge-create document)
+::
+++  fridge-delete
+  |=  =id
+  =/  deleted  (~(del by documents.store) id)
+  =/  contents  (fridge nextid.store deleted)
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
   %=  state
-    data  content
+    store  contents
+  ==
+:: update is just delete + create with specified id
+++  fridge-update
+  |=  =document
+  =/  deleted  (~(del by documents.store) id.document)
+  =/  updated  (~(put by deleted) id.document document)
+  =/  contents  (fridge nextid.store updated)
+  :: TODO: whats actually going on here, what does %document do/effect?
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  %=  state
+    store  contents
+  ==
+:: create, TODO: this should not be mixed up in the geojson building stuff
+++  fridge-create
+  |=  =document
+  =/  docs  (~(put by documents.store) nextid.store document)
+  =/  contents  (fridge (add 1 nextid.store) docs)
+  :: TODO: whats actually going on here, what does %document do/effect?
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  %=  state
+    store  contents
   ==
 ::
 ++  dejs-featurecollection
@@ -356,7 +380,7 @@
   =/  features-js  (need (~(get by p.json) 'features'))
   ?>  ?=([%a *] features-js)
   =/  features  ((list feature) (turn p.features-js dejs-feature))
-  ~&  features
+  ::  ~&  features
   features
 ::
 ++  dejs-feature
@@ -464,4 +488,5 @@
 :: Hello neighbour, did you really read all my code? or did you skip to the end?
 :: Please join my urbit GIS and cartography group if you want to know more
 :: ~lomped-firser/areography
+:: or dm me direct ~lomped-firser
 --

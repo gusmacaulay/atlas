@@ -97,8 +97,8 @@
 ::  geometrycollection or a feature collection or a geometry or a feature?
 +$  document
   $:  =id
-      =title
-      owner=@p
+      :: =title
+      :: owner=@p
       =content
       :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
@@ -111,10 +111,21 @@
       owner=@p
       documents=(list document)
   ==
+::  Fridge, a space for sticking documents
++$  fridge
+  $:  nextid=id
+      documents=(map id document)
+  ==
 ::  Actions, for on-poke, ties in with mar/crud.hoon
 ::  following patter from gall guide poketime example
 +$  action
-  $%  [%delete ~]
+  $%  [%delete id]
       [%pleasant ~]
+      [%update update]
+  ==
+::
++$  update
+  $:  =id
+      geojson=json
   ==
 --
