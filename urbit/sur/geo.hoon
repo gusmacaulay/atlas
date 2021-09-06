@@ -121,5 +121,11 @@
 +$  action
   $%  [%delete ~]
       [%pleasant ~]
+      [%update update]
+  ==
+::
++$  update
+  $:  =id
+      geojson=json
   ==
 --

@@ -57,7 +57,7 @@ const handleEvent = (message: any): void => {
       // nothing up my sleeve
       vector.getSource().clear();
       vector.getSource().addFeatures(featuresFormatted);
-      // vector.getMap().zoomToExtent(vector.getDataExtent());
+    // console.log(vector.getDataExtent());
       //
 };
 
@@ -65,7 +65,7 @@ const handleEvent = (message: any): void => {
 // const api = new CreateApi();
 const subscription: SubscriptionRequestInterface = {
   app: 'atlas', // atlas store gall app
-  path: '/portal',
+  path: '/fridge/0',
   event: handleEvent, err, quit
 };
 
@@ -114,7 +114,7 @@ class OLMapFragment extends React.Component {
             app: 'atlas',
             // mark: 'update',
             mark: 'json',
-            json: gj
+            json: { id : 0, geojson : gj }
           }).then(api.subscribe(subscription));
         });
      // Custom Control

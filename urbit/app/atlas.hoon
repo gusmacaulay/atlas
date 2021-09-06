@@ -67,7 +67,7 @@
         %geojson
       (poke-geojson-create:cc !<(@t vase))
         %json
-      (poke-geojson-create-js:cc !<(json vase))
+      (poke-geojson-update:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
       ::  %update
@@ -91,7 +91,7 @@
 ++  fetch-document
   |=  =path
   ^-  json
-  =/  id  `@ud`(slav %ud (snag 1 path))
+  =/  id  (slav %ud (snag 1 path))
   ~&  id
   =/  doc  (need (~(get by documents.store) id))
   =/  jd  (geojson-document content.doc)
@@ -294,16 +294,19 @@
   |-  ^-  ^tape
   (slag 2 (scow %rd a))
 ::
-++  poke-geojson-create-js
-  |=  gj=json
-  ~&  'poke json format create'
-  ::  ~&  gj
-  =/  feature  (feature (dejs-feature gj))
-  ::  ~&  feature
-  ::=/  features  (weld data ~[feature])
+++  poke-geojson-update
+  |=  =json
+  =/  update  (update (dejs-update json))
+  =/  feature  (feature (dejs-feature geojson.update))
   =/  content  (content [%feature feature])
-  =/  document  (document 0 content)
+  =/  document  (document id.update content)
   (fridge-update document)
+::
+++  dejs-update
+%-  ot
+  :~  [%id ne]
+      [%geojson json]
+==
 ::
 ++  poke-geojson-create
   |=  gj=@t
@@ -497,4 +500,5 @@
 :: Hello neighbour, did you really read all my code? or did you skip to the end?
 :: Please join my urbit GIS and cartography group if you want to know more
 :: ~lomped-firser/areography
+:: or dm me direct ~lomped-firser
 --
