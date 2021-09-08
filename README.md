@@ -6,10 +6,10 @@ Atlas
 ### Installing Atlas
 
 Atlas is a gall agent.  Install by copying files to your ship (or fake zod), commit and start
-
+You will need home desk mounted in the usual way.
 ```
 $>cp -r  ./urbit/* $FAKEZOD/home/
-dojo>|commit
+dojo>|commit %home
 dojo>|start %atlas
 ```
 
