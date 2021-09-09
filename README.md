@@ -35,6 +35,7 @@ Use yarn to build and start.  Currently hardcoded to attach to a fakezod.  You w
 
 ```
 $cd urlayers-standalone
+$yarn install
 $yarn start
 open localhost:3000 in browser
 ```
