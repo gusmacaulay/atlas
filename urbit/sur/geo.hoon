@@ -100,6 +100,7 @@
       :: =title
       :: owner=@p
       =content
+      :: pals=(list ship)
       :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
   ==
@@ -111,7 +112,7 @@
       owner=@p
       documents=(list document)
   ==
-::  Fridge, a space for sticking documents
+::  Fridge, a space for sticking documents (poastcards)
 +$  fridge
   $:  nextid=id
       documents=(map id document)
@@ -122,10 +123,16 @@
   $%  [%delete id]
       [%pleasant ~]
       [%update update]
+      [%share share]
+      [%poastcard ~]
   ==
 ::
 +$  update
   $:  =id
       geojson=json
+  ==
++$  share
+  $:  =id
+      pals=(list @p)
   ==
 --

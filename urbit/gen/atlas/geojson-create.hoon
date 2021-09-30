@@ -3,5 +3,5 @@
 /-  *geo
 :-  %say
 |=  [* [gj=@t ~] ~]
-~&  gj
+::~&  gj
 [%geojson gj]

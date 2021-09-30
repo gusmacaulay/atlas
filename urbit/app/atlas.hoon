@@ -67,9 +67,14 @@
         %geojson
       (poke-geojson-create:cc !<(@t vase))
         %json
-      (poke-geojson-update:cc !<(json vase))
+      (poke-json:cc !<(json vase))
+      ::(poke-geojson-update:cc !<(json vase))
         %delete
       (poke-delete:cc !<(json vase))
+        %share
+      (send-poast:cc !<(json vase))
+        %poastcard
+      (receive-poastcard:cc !<(json vase))
       ::  %update
       ::(poke-update:cc !<(json vase))
     ==
@@ -106,6 +111,7 @@
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
 ::  TODO: move this code in to the generator, which should fetch json from atlas
+::  probably should be a scry
 ++  poke-pleasant
   |=  *
   ^-  (quip card _state)
@@ -121,12 +127,76 @@
   ~&  (crip (en-json:html jd))
   document
 ::
+
+++  send-poast
+  |=  =json
+  :: placeholder
+  :: extract recipient
+  ?>  ?=([%o *] json)
+  ::=/  recp-ta
+  =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'ship')))
+  =/  recipient  (need recp-unit)
+  ~&  recipient
+  :_  state
+  ~[[%pass /poke-wire %agent [recipient %atlas] %poke %json !>(json)]]
+  ::(fridge-delete 0)
+::
+::  When a poastcard is received, should store a reference in the dogalog
+::  Then if accepted, subscribe to it
+::  For now, completely hacky - just store the actual poastcard
+++  receive-poastcard
+  |=  =json
+  ~&  'poastcard recieved'
+  ::=/  update  (update (dejs-update json))
+  ::~&  id.update
+  :: extract geojson
+  ?>  ?=([%o *] json)
+  =/  gj  (~(got by p.json) 'geojson')
+  =/  feature  (feature (dejs-feature gj))
+  =/  content  (content [%feature feature])
+  =/  document  (document nextid.store content)
+  ~&  document
+  (fridge-create document)
+::
+++  poke-geojson-create
+  |=  gj=@t
+  ^-  (quip card _state)
+  ~&  'GEOJSON POKE'
+  ::  de-json:html returns a unit, so use 'need' to get json
+  =/  gjo  (need (de-json:html gj))
+  ::  Check if is of json object form, otherwise can't pull apart
+  ?>  ?=([%o *] gjo)
+  :: Extract the type field and parse as needed
+  =/  typ=@t  (so (~(got by p.gjo) 'type'))
+  :: TODO: case insensitivity? check geojson spec.
+  ?+  typ  ~|([%unknown-geojson-type typ] !!)
+    %'Feature'  (feature-create gjo)
+    %'FeatureCollection'  (feature-collection-create gjo)
+    %'LineString'  (geometry-create gjo)
+    %'MultiLineString'  (geometry-create gjo)
+    %'Polygon'  (geometry-create gjo)
+    %'Point'  (geometry-create gjo)
+    %'MultiPoint'  (geometry-create gjo)
+    %'MultiPolygon'  (geometry-create gjo)
+    %'GeometryCollection'  (geometry-collection-create gjo)
+  ==
+::
+++  poke-json
+  |=  =json
+  ?>  ?=([%o *] json)
+  ?:  (~(has by p.json) %ship)
+    (receive-poastcard json)
+  (poke-geojson-update json)
+::  Geojson update, only works with feature for now
 ++  poke-geojson-update
   |=  =json
+  ~&  'geojson update'
   =/  update  (update (dejs-update json))
+  ~&  id.update
   =/  feature  (feature (dejs-feature geojson.update))
   =/  content  (content [%feature feature])
   =/  document  (document id.update content)
+  ~&  document
   (fridge-update document)
 ::  Delete operation, removes document from the store
 ++  poke-delete
@@ -289,34 +359,12 @@
 %-  ot
   :~  [%id ne]
 ==
-++  poke-geojson-create
-  |=  gj=@t
-  ^-  (quip card _state)
-  ~&  'GEOJSON POKE'
-  ::  de-json:html returns a unit, so use 'need' to get json
-  =/  gjo  (need (de-json:html gj))
-  ::  Check if is of json object form, otherwise can't pull apart
-  ?>  ?=([%o *] gjo)
-  :: Extract the type field and parse as needed
-  =/  typ=@t  (so (~(got by p.gjo) 'type'))
-  :: TODO: case insensitivity? check geojson spec.
-  ?+  typ  ~|([%unknown-geojson-type typ] !!)
-    %'Feature'  (feature-create gjo)
-    %'FeatureCollection'  (feature-collection-create gjo)
-    %'LineString'  (geometry-create gjo)
-    %'MultiLineString'  (geometry-create gjo)
-    %'Polygon'  (geometry-create gjo)
-    %'Point'  (geometry-create gjo)
-    %'MultiPoint'  (geometry-create gjo)
-    %'MultiPolygon'  (geometry-create gjo)
-    %'GeometryCollection'  (geometry-collection-create gjo)
-  ==
 ::
 ++  geometry-collection-create
   |=  =json
   =/  geometrycollection  (dejs-geometrycollection json)
   =/  content  (content [%geometrycollection geometrycollection])
-  =/  document  (document 0 content)
+  =/  document  (document nextid.store content)
   (fridge-create document)
 ::
 ++  geometry-create
@@ -324,7 +372,7 @@
   =/  geometry  (dejs-geometry json)
   =/  content  (content [%geometry geometry])
   ::=/  contents  (weld ~[content] data)
-  =/  document  (document 0 content)
+  =/  document  (document nextid.store content)
   (fridge-create document)
 ::
 ++  feature-collection-create
@@ -333,7 +381,7 @@
   ~&  uncast
   =/  featurecollection  (featurecollection uncast)
   =/  content  (content [%featurecollection featurecollection])
-  =/  document  (document 0 content)
+  =/  document  (document nextid.store content)
   (fridge-create document)
 ::
 ++  feature-create
@@ -341,7 +389,7 @@
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
-  =/  document  (document 0 content)
+  =/  document  (document nextid.store content ~[~])
   (fridge-create document)
 ::
 ++  fridge-delete
