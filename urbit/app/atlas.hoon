@@ -9,7 +9,7 @@
   $%  state-zero
   ==
 ::+$  state-zero  [%0 data=(list feature)]
-:: TODO: near term this should be list of document
+:: TODO; need to preserve state across restarts/upgrades
 +$  state-zero  [%0 store=fridge]
 --
 =|  state-zero
@@ -42,6 +42,9 @@
       [%fridge *]
     :_  this
     [%give %fact ~ %json !>((fetch-document path))]~
+      [%dogalog *]
+    :_  this
+    [%give %fact ~ %json !>((fetch-all-docs path))]~
   ==
 ::
 ++  on-agent  on-agent:def
@@ -113,6 +116,19 @@
   =/  jd  (geojson-document content.doc)
   ::=/  jason  (en-json:html jd)
   jd
+:: Fetch All, returns everything in the store as json
+++  fetch-all-docs
+  |=  =path
+  ^-  json
+  ~&  '...fetching the dogalog'
+  =/  all-docs  (~(run by documents.store) render-doc)
+  (json [%o all-docs])
+::
+++  render-doc
+  |=  =document
+  =/  jd  (geojson-document content.document)
+  jd
+::
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
 ::  A pleasant printer is like a pretty printer but calm
 ::  TODO: move this code in to the generator, which should fetch json from atlas
@@ -132,7 +148,6 @@
   ~&  (crip (en-json:html jd))
   document
 ::
-
 ++  send-poast
   |=  =json
   :: placeholder
@@ -191,7 +206,9 @@
   ?>  ?=([%o *] json)
   ?:  (~(has by p.json) %ship)
     (receive-poastcard json)
-  (poke-geojson-update json)
+  ?:  (~(has by p.json) %id)
+    (poke-geojson-update json)
+  (feature-create json)
 ::  Geojson update, only works with feature for now
 ++  poke-geojson-update
   |=  =json
@@ -394,7 +411,7 @@
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
-  =/  document  (document nextid.store content ~[~])
+  =/  document  (document nextid.store content) :: ~[~])
   (fridge-create document)
 ::
 ++  fridge-delete
