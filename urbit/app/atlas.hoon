@@ -82,7 +82,12 @@
 ++  on-save  on-save:def
 ++  on-load  on-load:def
 ++  on-leave  on-leave:def
-++  on-peek   on-peek:def
+++  on-peek
+  |=  pax=path
+  ::^-  (unit (unit cage))
+  ~&  'ON PEEK!!'
+  (on-peek:def pax)
+::
 ++  on-fail   on-fail:def
 --
 ::
