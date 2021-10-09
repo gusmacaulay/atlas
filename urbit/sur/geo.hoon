@@ -127,6 +127,9 @@
       [%poastcard ~]
   ==
 ::
++$  create
+  $:  geojson=json
+  ==
 +$  update
   $:  =id
       geojson=json

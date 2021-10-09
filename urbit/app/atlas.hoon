@@ -208,7 +208,7 @@
     (receive-poastcard json)
   ?:  (~(has by p.json) %id)
     (poke-geojson-update json)
-  (feature-create json)
+  (feature-create (dejs-create json))
 ::  Geojson update, only works with feature for now
 ++  poke-geojson-update
   |=  =json
@@ -371,6 +371,12 @@
   |-  ^-  ^tape
   (slag 2 (scow %rd a))
 ::
+::
+++  dejs-create
+%-  ot
+  :~  [%geojson json]
+==
+::
 ++  dejs-update
 %-  ot
   :~  [%id ne]
@@ -411,7 +417,8 @@
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
-  =/  document  (document nextid.store content) :: ~[~])
+  =/  id  (next-id nextid.store)
+  =/  document  (document id content) :: ~[~])
   (fridge-create document)
 ::
 ++  fridge-delete
@@ -436,13 +443,25 @@
 :: create, TODO: this should not be mixed up in the geojson building stuff
 ++  fridge-create
   |=  =document
-  =/  docs  (~(put by documents.store) nextid.store document)
-  =/  contents  (fridge (add 1 nextid.store) docs)
+  =/  docs  (~(put by documents.store) (next-id nextid.store) document)
+  =/  contents  (fridge (add 1 (next-id nextid.store)) docs)
   :: TODO: whats actually going on here, what does %document do/effect?
   :-  [%give %fact ~[/atlas] %document !>(contents)]~
   %=  state
     store  contents
   ==
+::
+++  next-id
+  |=  next=id
+  ~&  'THE CURRENT ID'
+  ~&  next
+  ^-  id
+  =/  s  ~(val by documents.store)
+  =/  l  (lent s)
+  ?:  =(l 0)
+    0
+  next
+  ::nextid.store
 ::
 ++  dejs-featurecollection
   |=  =json
