@@ -174,7 +174,7 @@
   =/  gj  (~(got by p.json) 'geojson')
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
-  =/  document  (document nextid.store content)
+  =/  document  (document (next-id nextid.store) content)
   ~&  document
   (fridge-create document)
 ::
