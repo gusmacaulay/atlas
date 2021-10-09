@@ -123,9 +123,15 @@
   ~&  '...fetching the dogalog'
   ::=/  all-docs  (~(run by documents.store) render-doc)
   ::(json [%o all-docs])
-  =/  keys  ~(key by documents.store)
+  =/  keys  ~(tap in ~(key by documents.store))
   ~&  keys
-  (json [%a keys])
+  ::(json (frond:enjs 'keys' (json [%a keys])))
+  =/  json-keys  [%a ?~(keys ~ (turn `(list id)`keys numb:enjs:format))]
+  ::=/  fcj  [%a ?~(fc ~ (turn `(list feature)`fc geojson-feature))]
+  ::=/  json-keys  (json [%a keys])
+  ~&  'GIMME MY KEYS!!'
+  ~&  (en-json:html json-keys)
+  json-keys
 ::
 ++  render-doc
   |=  =document
