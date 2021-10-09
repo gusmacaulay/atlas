@@ -121,8 +121,11 @@
   |=  =path
   ^-  json
   ~&  '...fetching the dogalog'
-  =/  all-docs  (~(run by documents.store) render-doc)
-  (json [%o all-docs])
+  ::=/  all-docs  (~(run by documents.store) render-doc)
+  ::(json [%o all-docs])
+  =/  keys  ~(key by documents.store)
+  ~&  keys
+  (json [%a keys])
 ::
 ++  render-doc
   |=  =document
@@ -139,7 +142,9 @@
   ::=/  doc  (need (~(get by documents.store) 0))
   ::=/  jd  (geojson-document content.doc)
   ::[(print-doc (need (~(get by documents.store) 0))) state]
-  =/  printed  (~(run by documents.store) print-doc)
+  ::=/  printed  (~(run by documents.store) print-doc)
+  =/  keys  ~(key by documents.store)
+  ~&  keys
   [~ state]
 ::
 ++  print-doc
