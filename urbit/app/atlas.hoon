@@ -10,7 +10,7 @@
   ==
 ::+$  state-zero  [%0 data=(list feature)]
 :: TODO; need to preserve state across restarts/upgrades
-+$  state-zero  [%0 store=fridge]
++$  state-zero  [%0 store=fridge =dogalog]
 --
 =|  state-zero
 =*  state  -
@@ -21,15 +21,15 @@
 +*  this      .
     def   ~(. (default-agent this %|) bol)
     cc    ~(. +> bol)
-::++  on-init  on-init:def
-++  on-init
-  ^-  (quip card _this)
-  =/  launcha  [%launch-action !>([%add %atlas [[%basic 'atlas' '/~atlas/img/tile.png' '/~atlas'] %.y]])]
-  =/  filea  [%file-server-action !>([%serve-dir /'~atlas' /app/atlas %.n %.n])]
-  :_  this
-  :~  [%pass /srv %agent [our.bol %file-server] %poke filea]
-      [%pass /atlas %agent [our.bol %launch] %poke launcha]
-      ==
+++  on-init  on-init:def
+::++  on-init
+::  ^-  (quip card _this)
+::  =/  launcha  [%launch-action !>([%add %atlas [[%basic 'atlas' '/~atlas/img/tile.png' '/~atlas'] %.y]])]
+::  =/  filea  [%file-server-action !>([%serve-dir /'~atlas' /app/atlas %.n %.n])]
+::  :_  this
+::  :~  [%pass /srv %agent [our.bol %file-server] %poke filea]
+::      [%pass /atlas %agent [our.bol %launch] %poke launcha]
+::      ==
 ::
 ++  on-watch
   |=  =path
@@ -44,7 +44,7 @@
     [%give %fact ~ %json !>((fetch-document path))]~
       [%dogalog *]
     :_  this
-    [%give %fact ~ %json !>((fetch-all-docs path))]~
+    [%give %fact ~ %json !>((fetch-dogalog path))]~
   ==
 ::
 ++  on-agent  on-agent:def
@@ -85,11 +85,10 @@
 ++  on-save  on-save:def
 ++  on-load  on-load:def
 ++  on-leave  on-leave:def
-++  on-peek
-  |=  pax=path
-  ::^-  (unit (unit cage))
-  ~&  'ON PEEK!!'
-  (on-peek:def pax)
+++  on-peek  on-peek:def
+::  |=  pax=path
+::  ~&  'ON PEEK!!'
+::  (on-peek:def pax)
 ::
 ++  on-fail   on-fail:def
 --
@@ -116,22 +115,40 @@
   =/  jd  (geojson-document content.doc)
   ::=/  jason  (en-json:html jd)
   jd
-:: Fetch All, returns everything in the store as json
-++  fetch-all-docs
+:: Returns the dogalog, as json
+++  fetch-dogalog
   |=  =path
   ^-  json
   ~&  '...fetching the dogalog'
   ::=/  all-docs  (~(run by documents.store) render-doc)
   ::(json [%o all-docs])
-  =/  keys  ~(tap in ~(key by documents.store))
-  ~&  keys
+  =/  pupper  ~(tap by entries.dogalog)
+  =/  doggo  (turn pupper json-entry)
+  ::=/  keys  ~(tap in ~(key by doggo))
+  ::~&  keys
   ::(json (frond:enjs 'keys' (json [%a keys])))
-  =/  json-keys  [%a ?~(keys ~ (turn `(list id)`keys numb:enjs:format))]
+  ::=/  json-keys  [%a ?~(keys ~ (turn `(list path)`keys tape:enjs:format))]
   ::=/  fcj  [%a ?~(fc ~ (turn `(list feature)`fc geojson-feature))]
   ::=/  json-keys  (json [%a keys])
   ~&  'GIMME MY KEYS!!'
-  ~&  (en-json:html json-keys)
-  json-keys
+  ~&  (crip (en-json:html (pairs:enjs doggo)))
+  (pairs:enjs doggo)
+  ::json-keys
+::
+++  json-entry
+  |=  [=path =entry]
+  ^-  [@t json]
+  ::=/  fridge-id  (need fridge-id.entry)
+  =/  sender  [%sender (ship:enjs sender.entry)]
+  =/  remote  [%remote (numb:enjs remote-id.entry)]
+  ?~  (need fridge-id.entry)
+    [(spat path) (pairs:enjs ~[sender remote [%fridge (numb:enjs (need fridge-id.entry))]])]
+  =/  entry-j  (pairs:enjs ~[sender remote])
+  ::=/  entry-j  (pairs:enjs ~[[%sender sender.entry] [%remote remote-id.entry]])
+  ~&  (crip (en-json:html entry-j))
+  ::(ship:enjs sender.entry)
+  ::(frond:enjs [`@t`(scot %path path) entry-j])
+  [(spat path) entry-j]
 ::
 ++  render-doc
   |=  =document
@@ -151,6 +168,7 @@
   ::=/  printed  (~(run by documents.store) print-doc)
   =/  keys  ~(key by documents.store)
   ~&  keys
+  ~&  (fetch-dogalog ~)
   [~ state]
 ::
 ++  print-doc
@@ -186,7 +204,9 @@
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
   =/  document  (document (next-id nextid.store) content)
-  ~&  document
+  ::=/  entry  (entry our.bol id ~)
+  ::~&  entry
+  ::(fridge-create-entry [document entry])
   (fridge-create document)
 ::
 ++  poke-geojson-create
@@ -452,15 +472,37 @@
     store  contents
   ==
 :: create, TODO: this should not be mixed up in the geojson building stuff
-++  fridge-create
-  |=  =document
-  =/  docs  (~(put by documents.store) (next-id nextid.store) document)
-  =/  contents  (fridge (add 1 (next-id nextid.store)) docs)
+++  fridge-create-entry
+  |=  [=document =entry]
+  =/  id  (next-id nextid.store)
+  =/  docs  (~(put by documents.store) id document)
+  =/  contents  (fridge (add 1 id) docs)
+  =/  pupper  (dogalog-upsert entry)
   :: TODO: whats actually going on here, what does %document do/effect?
   :-  [%give %fact ~[/atlas] %document !>(contents)]~
   %=  state
     store  contents
+    dogalog  pupper
   ==
+++  fridge-create
+  |=  =document
+  =/  id  (next-id nextid.store)
+  =/  docs  (~(put by documents.store) id document)
+  =/  entry  (entry our.bol id (some id))
+  =/  contents  (fridge (add 1 id) docs)
+  ::=/  contents  [(fridge (add 1 id) docs) (dogalog-upsert entry)]
+  =/  pupper  (dogalog-upsert entry)
+  :: TODO: whats actually going on here, what does %document do/effect?
+  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  %=  state
+    store  contents
+    dogalog  pupper
+  ==
+::
+++  dogalog-upsert
+  |=  =entry
+  =/  ref  (path [`@t`(scot %p our.bol) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
+  (~(put by entries.dogalog) ref entry)
 ::
 ++  next-id
   |=  next=id

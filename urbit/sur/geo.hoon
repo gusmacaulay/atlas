@@ -117,6 +117,17 @@
   $:  nextid=id
       documents=(map id document)
   ==
+::  Dogalog, (like a c*talog but friendly)
++$  entry
+  $:  sender=@p
+      ::=title
+      remote-id=id
+      fridge-id=(unit id)
+  ==
+::
++$  dogalog
+  $:  entries=(map path entry)
+  ==
 ::  Actions, for on-poke, ties in with mar/crud.hoon
 ::  following patter from gall guide poketime example
 +$  action
