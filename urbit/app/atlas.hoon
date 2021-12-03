@@ -47,7 +47,34 @@
     [%give %fact ~ %json !>((fetch-dogalog path))]~
   ==
 ::
-++  on-agent  on-agent:def
+++  on-agent
+  |=  [=wire =sign:agent:gall]
+  ^-  (quip card _this)
+  ~&  wire
+  ~&  sign
+  ::~&  `this
+  ~&  'on agent!'
+  ?+    wire  (on-agent:def wire sign)
+      [%fridge *]
+      ~&  'fridge wire!'
+    ?+  -.sign  (on-agent:def wire sign)
+        %fact
+      =/  json  !<(json q.cage.sign)
+      ~&  "WUT?"
+      ~&  (crip (en-json:html json))
+      ::(feature-create json)
+      ::~&  >>  "counter val on {<src.bowl>} is {<val>}"
+      ::~&  'FACT!'
+      ::~&  q.cage.sign
+      `this
+      ::(on-agent:def wire sign)
+      ==
+      ::
+      [%poke-wire ~]
+    ?~  +.sign
+      ~&  >>  "successful {<-.sign>}"  `this
+    (on-agent:def wire sign)
+  ==
 ::
 ++  on-arvo
   |=  [=wire =sign-arvo]
@@ -76,8 +103,9 @@
       (poke-delete:cc !<(json vase))
         %share
       (send-poast:cc !<(json vase))
-        %poastcard
-      (receive-poastcard:cc !<(json vase))
+        %accept
+      (subscribe-poastcard:cc !<(json vase))
+      ::(receive-poastcard:cc !<(json vase))
       ::  %update
       ::(poke-update:cc !<(json vase))
     ==
@@ -103,8 +131,13 @@
 ++  fetch-document
   |=  =path
   ^-  json
+  ~&  'FETCHNIG DOC'
+  ~&  path
   :: TODO: is there a way to template these paths, below seems hacky
-  =/  id  (slav %ud (snag 1 path))
+  =/  id  0
+  ::=/  id  (slav %ud (snag 1 path))
+  ~&  'NOT DED'
+  ~&  id
   ?:  ?=(~(has by documents.store) id)
     (fetch-actual id)
   ~
@@ -120,17 +153,8 @@
   |=  =path
   ^-  json
   ~&  '...fetching the dogalog'
-  ::=/  all-docs  (~(run by documents.store) render-doc)
-  ::(json [%o all-docs])
   =/  pupper  ~(tap by entries.dogalog)
   =/  doggo  (turn pupper json-entry)
-  ::=/  keys  ~(tap in ~(key by doggo))
-  ::~&  keys
-  ::(json (frond:enjs 'keys' (json [%a keys])))
-  ::=/  json-keys  [%a ?~(keys ~ (turn `(list path)`keys tape:enjs:format))]
-  ::=/  fcj  [%a ?~(fc ~ (turn `(list feature)`fc geojson-feature))]
-  ::=/  json-keys  (json [%a keys])
-  ~&  'GIMME MY KEYS!!'
   ~&  (crip (en-json:html (pairs:enjs doggo)))
   (pairs:enjs doggo)
   ::json-keys
@@ -140,15 +164,17 @@
   ^-  [@t json]
   ::=/  fridge-id  (need fridge-id.entry)
   =/  sender  [%sender (ship:enjs sender.entry)]
-  =/  remote  [%remote (numb:enjs remote-id.entry)]
-  ?~  (need fridge-id.entry)
-    [(spat path) (pairs:enjs ~[sender remote [%fridge (numb:enjs (need fridge-id.entry))]])]
-  =/  entry-j  (pairs:enjs ~[sender remote])
-  ::=/  entry-j  (pairs:enjs ~[[%sender sender.entry] [%remote remote-id.entry]])
-  ~&  (crip (en-json:html entry-j))
-  ::(ship:enjs sender.entry)
-  ::(frond:enjs [`@t`(scot %path path) entry-j])
-  [(spat path) entry-j]
+  =/  remote  [%remote-id (numb:enjs remote-id.entry)]
+  ::=/  fridge-id  ~
+  ::(need fridge-id.entry)
+  ::~&  'Need fridge-id;'
+  ::~&  (need fridge-id)
+  =/  idjs  (biff fridge-id.entry numb:enjs)
+  ::?~  (numb:enjs (need fridge-id))
+  ::  [(spat path) (pairs:enjs ~[sender remote])]
+  [(spat path) (pairs:enjs ~[sender remote [%fridge-id idjs]])]
+  ::=/  entry-j  (pairs:enjs ~[sender remote])
+  ::~&  (crip (en-json:html entry-j))
 ::
 ++  render-doc
   |=  =document
@@ -166,8 +192,8 @@
   ::=/  jd  (geojson-document content.doc)
   ::[(print-doc (need (~(get by documents.store) 0))) state]
   ::=/  printed  (~(run by documents.store) print-doc)
-  =/  keys  ~(key by documents.store)
-  ~&  keys
+  ::=/  keys  ~(key by documents.store)
+  ::~&  keys
   ~&  (fetch-dogalog ~)
   [~ state]
 ::
@@ -204,10 +230,36 @@
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
   =/  document  (document (next-id nextid.store) content)
-  ::=/  entry  (entry our.bol id ~)
+  =/  entry  (entry our.bol (next-id nextid.store) ~)
   ::~&  entry
-  ::(fridge-create-entry [document entry])
-  (fridge-create document)
+  (fridge-create-entry [document entry])
+  ::(fridge-create document)
+::
+:: This poke should actually store the poast, but instead is just updating the
+:: dogalog
+++  subscribe-poastcard
+  |=  =json
+  ^-  (quip card _state)
+  ?>  ?=([%o *] json)
+  ::=/  path  (~(got by p.json) 'path')
+  =/  remote-id  (so (~(got by p.json) 'remote-id'))
+  ::=/  path  (need path-unit)
+  ~&  remote-id
+  =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
+  =/  sender  (need sender-unit)
+  ~&  sender
+  :_  state
+  ~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %watch /fridge/(scot %ta remote-id)]]
+  ::~[[%pass /fridge %agent [sender %atlas] %poke %json !>(json)]]
+  :::_  state
+  ::~[[%pass path %agent [sender %atlas] %watch %json !>(json)]]
+  ::~[[%pass /poke-wire %agent [sender %atlas] %watch %json !>(json)]]
+  :::-  [%give %fact ~[/atlas] %document !>(contents)]~
+  ::%=  state
+  ::  store  contents
+  ::  dogalog  pupper
+  ::==
+
 ::
 ++  poke-geojson-create
   |=  gj=@t
@@ -456,7 +508,7 @@
   |=  =id
   =/  deleted  (~(del by documents.store) id)
   =/  contents  (fridge nextid.store deleted)
-  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
     store  contents
   ==
@@ -467,7 +519,7 @@
   =/  updated  (~(put by deleted) id.document document)
   =/  contents  (fridge nextid.store updated)
   :: TODO: whats actually going on here, what does %document do/effect?
-  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
     store  contents
   ==
@@ -479,7 +531,7 @@
   =/  contents  (fridge (add 1 id) docs)
   =/  pupper  (dogalog-upsert entry)
   :: TODO: whats actually going on here, what does %document do/effect?
-  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
     store  contents
     dogalog  pupper
@@ -487,13 +539,15 @@
 ++  fridge-create
   |=  =document
   =/  id  (next-id nextid.store)
+  ~&  'Calculated ID;'
+  ~&  id
   =/  docs  (~(put by documents.store) id document)
   =/  entry  (entry our.bol id (some id))
   =/  contents  (fridge (add 1 id) docs)
   ::=/  contents  [(fridge (add 1 id) docs) (dogalog-upsert entry)]
   =/  pupper  (dogalog-upsert entry)
   :: TODO: whats actually going on here, what does %document do/effect?
-  :-  [%give %fact ~[/atlas] %document !>(contents)]~
+  :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
     store  contents
     dogalog  pupper
@@ -502,6 +556,8 @@
 ++  dogalog-upsert
   |=  =entry
   =/  ref  (path [`@t`(scot %p our.bol) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
+  ~&  'ENTRY TO BE INSERTED'
+  ~&  entry
   (~(put by entries.dogalog) ref entry)
 ::
 ++  next-id
