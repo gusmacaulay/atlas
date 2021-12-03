@@ -1,0 +1,10 @@
+:~  title+'Atlas'
+    info+'A simple atlas app'
+    color+0x81.88c9
+    image+'https://media.urbit.org/docs/userspace/dist/wut.svg'
+    base+'atlas'
+    glob-ames+[~zod 0v0]
+    version+[0 0 1]
+    website+'https://urbit.org/docs/userspace/dist/guide'
+    license+'MIT'
+==
