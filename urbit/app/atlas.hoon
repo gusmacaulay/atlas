@@ -54,27 +54,19 @@
   ~&  sign
   ::~&  `this
   ~&  'on agent!'
-  ?+    wire  (on-agent:def wire sign)
-      [%fridge *]
-      ~&  'fridge wire!'
-    ?+  -.sign  (on-agent:def wire sign)
-        %fact
-      =/  json  !<(json q.cage.sign)
-      ~&  "WUT?"
-      ~&  (crip (en-json:html json))
-      ::(feature-create json)
-      ::~&  >>  "counter val on {<src.bowl>} is {<val>}"
-      ::~&  'FACT!'
-      ::~&  q.cage.sign
-      `this
-      ::(on-agent:def wire sign)
-      ==
-      ::
-      [%poke-wire ~]
-    ?~  +.sign
-      ~&  >>  "successful {<-.sign>}"  `this
-    (on-agent:def wire sign)
-  ==
+    ?+    wire  (on-agent:def wire sign)
+        [%fridge *]
+        ~&  'fridge wire!'
+      ?+  -.sign  (on-agent:def wire sign)
+          %fact
+        ::=/  json  !<(json q.cage.sign)
+        ::~&  (crip (en-json:html json))
+        ~&  'woo'
+        =^  cards  state
+          (receive-poastcard:cc !<(json q.cage.sign))
+        [cards this]
+        ==
+    ==
 ::
 ++  on-arvo
   |=  [=wire =sign-arvo]
@@ -220,18 +212,20 @@
 ::  Then if accepted, subscribe to it
 ::  For now, completely hacky - just store the actual poastcard
 ++  receive-poastcard
-  |=  =json
-  ~&  'poastcard recieved'
+  |=  gj=json
+  ~&  'poastcard recieved!!'
   ::=/  update  (update (dejs-update json))
   ::~&  id.update
   :: extract geojson
-  ?>  ?=([%o *] json)
-  =/  gj  (~(got by p.json) 'geojson')
+  ?>  ?=([%o *] gj)
+  ~&  gj
+  ::=/  gj  (~(got by p.json) 'geojson')
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
   =/  document  (document (next-id nextid.store) content)
   =/  entry  (entry our.bol (next-id nextid.store) ~)
   ::~&  entry
+  ~&  'bout to do a thing'
   (fridge-create-entry [document entry])
   ::(fridge-create document)
 ::
@@ -526,6 +520,7 @@
 :: create, TODO: this should not be mixed up in the geojson building stuff
 ++  fridge-create-entry
   |=  [=document =entry]
+  ~&  'Im in ur fridge creating entries'
   =/  id  (next-id nextid.store)
   =/  docs  (~(put by documents.store) id document)
   =/  contents  (fridge (add 1 id) docs)
@@ -686,5 +681,5 @@
 :: Hello neighbour, did you really read all my code? or did you skip to the end?
 :: Please join my urbit GIS and cartography group if you want to know more
 :: ~lomped-firser/areography
-:: or dm me direct ~lomped-firser
+:: or dm me direct ~lomped-firser (Lumphead)
 --
