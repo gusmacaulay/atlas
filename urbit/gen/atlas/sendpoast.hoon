@@ -1,11 +1,7 @@
-::  create geojson on another ship, dodgy
+::  accept a poastcard that is already in dogalog
 /-  *geo
 :-  %say
-|=  [* [gj=@t ~] ~]
+|=  [* [poast=@t ~] ~]
 ::~&  gj
-=/  gjo  (need (de-json:html gj))
-::~&  gjo
-::~&  'Object above'
-::  Check if is of json object form, otherwise can't pull apart
-::?>  ?=([%o *] gjo)
-[%share gjo]
+=/  poast  (need (de-json:html poast))
+[%share poast]

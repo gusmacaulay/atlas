@@ -63,7 +63,7 @@
         ::~&  (crip (en-json:html json))
         ~&  'woo'
         =^  cards  state
-          (receive-poastcard:cc !<(json q.cage.sign))
+          (receive-poastcard:cc [!<(json q.cage.sign) src.bol])
         [cards this]
         ==
     ==
@@ -97,6 +97,8 @@
       (send-poast:cc !<(json vase))
         %accept
       (subscribe-poastcard:cc !<(json vase))
+        %unsubscribe
+      (unsubscribe-poastcard !<(json vase))
       ::(receive-poastcard:cc !<(json vase))
       ::  %update
       ::(poke-update:cc !<(json vase))
@@ -201,7 +203,7 @@
   :: extract recipient
   ?>  ?=([%o *] json)
   ::=/  recp-ta
-  =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'ship')))
+  =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
   =/  recipient  (need recp-unit)
   ~&  recipient
   :_  state
@@ -210,9 +212,8 @@
 ::
 ::  When a poastcard is received, should store a reference in the dogalog
 ::  Then if accepted, subscribe to it
-::  For now, completely hacky - just store the actual poastcard
 ++  receive-poastcard
-  |=  gj=json
+  |=  [gj=json sender=@p]
   ~&  'poastcard recieved!!'
   ::=/  update  (update (dejs-update json))
   ::~&  id.update
@@ -223,14 +224,29 @@
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
   =/  document  (document (next-id nextid.store) content)
-  =/  entry  (entry our.bol (next-id nextid.store) ~)
-  ::~&  entry
+  ~&  'NEXT ID'
+  ~&  nextid.store
+  =/  fridge-id  `(unit)`(some nextid.store)
+  =/  entry  (entry sender (next-id nextid.store) fridge-id)
+  ~&  'ENTRY'
+  ~&  entry
   ~&  'bout to do a thing'
   (fridge-create-entry [document entry])
   ::(fridge-create document)
 ::
-:: This poke should actually store the poast, but instead is just updating the
-:: dogalog
+++  unsubscribe-poastcard
+  |=  =json
+  ^-  (quip card _state)
+  ?>  ?=([%o *] json)
+  =/  remote-id  (so (~(got by p.json) 'remote-id'))
+  ~&  remote-id
+  =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
+  =/  sender  (need sender-unit)
+  :_  state
+  ~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %leave ~]]
+::
+:: Update the dogalog and pass %watch to the sender, which in turn sends a %fact
+:: which is handled in the recievers on-agent
 ++  subscribe-poastcard
   |=  =json
   ^-  (quip card _state)
@@ -243,6 +259,7 @@
   =/  sender  (need sender-unit)
   ~&  sender
   :_  state
+  ::~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %leave ~]]
   ~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %watch /fridge/(scot %ta remote-id)]]
   ::~[[%pass /fridge %agent [sender %atlas] %poke %json !>(json)]]
   :::_  state
@@ -282,7 +299,7 @@
   |=  =json
   ?>  ?=([%o *] json)
   ?:  (~(has by p.json) %ship)
-    (receive-poastcard json)
+    (receive-poastcard [json our.bol])
   ?:  (~(has by p.json) %id)
     (poke-geojson-update json)
   (feature-create (dejs-create json))
@@ -526,6 +543,7 @@
   =/  contents  (fridge (add 1 id) docs)
   =/  pupper  (dogalog-upsert entry)
   :: TODO: whats actually going on here, what does %document do/effect?
+  ~&  contents
   :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
     store  contents
@@ -550,9 +568,10 @@
 ::
 ++  dogalog-upsert
   |=  =entry
-  =/  ref  (path [`@t`(scot %p our.bol) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
+  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   ~&  'ENTRY TO BE INSERTED'
   ~&  entry
+  ~&  'How to get the fridge id if it exists?'
   (~(put by entries.dogalog) ref entry)
 ::
 ++  next-id
