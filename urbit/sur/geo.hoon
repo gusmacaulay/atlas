@@ -135,6 +135,7 @@
       [%pleasant ~]
       [%update update]
       [%share json]
+      [%accept json]
       [%poastcard ~]
   ==
 ::
