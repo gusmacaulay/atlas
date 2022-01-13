@@ -87,7 +87,7 @@
         %pleasant
       (poke-pleasant:cc !<(~ vase))
         %geojson
-      (poke-geojson-create:cc !<(@t vase))
+      (poke-geojson-create:cc !<(json vase))
         %json
       (poke-json:cc !<(json vase))
       ::(poke-geojson-update:cc !<(json vase))
@@ -201,6 +201,7 @@
   |=  =json
   :: placeholder
   :: extract recipient
+  ~&  'SENDING PAOST'
   ?>  ?=([%o *] json)
   ::=/  recp-ta
   =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
@@ -273,11 +274,12 @@
 
 ::
 ++  poke-geojson-create
-  |=  gj=@t
+  |=  gjo=json::gj=@t
   ^-  (quip card _state)
   ~&  'GEOJSON POKE'
+  ::~&  gj
   ::  de-json:html returns a unit, so use 'need' to get json
-  =/  gjo  (need (de-json:html gj))
+  ::=/  gjo  (need (de-json:html gj))
   ::  Check if is of json object form, otherwise can't pull apart
   ?>  ?=([%o *] gjo)
   :: Extract the type field and parse as needed

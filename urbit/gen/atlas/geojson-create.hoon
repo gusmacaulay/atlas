@@ -4,4 +4,5 @@
 :-  %say
 |=  [* [gj=@t ~] ~]
 ::~&  gj
-[%geojson gj]
+=/  geojson  (need (de-json:html gj))
+[%geojson geojson]
