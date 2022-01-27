@@ -136,9 +136,14 @@
       [%update update]
       [%share json]
       [%accept json]
+      [%geojson json]
       [%poastcard ~]
   ==
 ::
+::
++$  geojson
+  $:  geojson=json
+  ==
 +$  create
   $:  geojson=json
   ==
