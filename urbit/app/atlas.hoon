@@ -278,7 +278,7 @@
   |=  gjo=json::gj=@t
   ^-  (quip card _state)
   ~&  'GEOJSON POKE'
-  ::~&  gj
+  ~&  gjo
   ::  de-json:html returns a unit, so use 'need' to get json
   ::=/  gjo  (need (de-json:html gj))
   ::  Check if is of json object form, otherwise can't pull apart
@@ -525,6 +525,7 @@
 ::
 ++  feature-create
   |=  jsonobject=json
+  ~&  'In feature create'
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
