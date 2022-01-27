@@ -50,8 +50,9 @@
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
+  ~&  "wire:"
   ~&  wire
-  ~&  sign
+  ::~&  sign
   ::~&  `this
   ~&  'on agent!'
     ?+    wire  (on-agent:def wire sign)
@@ -176,7 +177,7 @@
   jd
 ::
 ::  Diagnostic poke, ultimately should be a 'pleasant printer' for GeoJSON
-::  A pleasant printer is like a pretty printer but calm
+::  A pleasant printer is like a etty printer but calm
 ::  TODO: move this code in to the generator, which should fetch json from atlas
 ::  probably should be a scry
 ++  poke-pleasant
@@ -299,12 +300,26 @@
 ::
 ++  poke-json
   |=  =json
+  ~&  "poke json"
   ?>  ?=([%o *] json)
-  ?:  (~(has by p.json) %ship)
-    (receive-poastcard [json our.bol])
-  ?:  (~(has by p.json) %id)
-    (poke-geojson-update json)
-  (feature-create (dejs-create json))
+  ?:  (~(has by p.json) %fridge-id)
+    ~&  'has ship'
+    ~&  json
+    ::~&  src.bol
+    ~
+    ::=/  entry  (entry [[%remote-id 0] [%sender src.bol]])
+    ::=/  entry  (entry src.bol (next-id nextid.store) ~)
+    ::~&  entry
+    ::(dogalog-upsert entry)
+  ::?:  (~(has by p.json) %id)
+  ::  (poke-geojson-update json)
+  ~
+::
+++  dejs-dogalog-entry
+%-  ot
+  :~  [%remote-id ne]
+  ::    [%recipients @p]
+==
 ::  Geojson update, only works with feature for now
 ++  poke-geojson-update
   |=  =json
