@@ -277,7 +277,7 @@
 ++  poke-geojson-create
   |=  gjo=json::gj=@t
   ^-  (quip card _state)
-  ~&  'GEOJSON POKE'
+  ~&  'In geojson poke'
   ~&  gjo
   ::  de-json:html returns a unit, so use 'need' to get json
   ::=/  gjo  (need (de-json:html gj))
@@ -303,14 +303,21 @@
   ~&  "poke json"
   ?>  ?=([%o *] json)
   ?:  (~(has by p.json) %fridge-id)
-    ~&  'has ship'
+    ~&  'has fridge-id'
     ~&  json
-    ::~&  src.bol
-    ~
-    ::=/  entry  (entry [[%remote-id 0] [%sender src.bol]])
-    ::=/  entry  (entry src.bol (next-id nextid.store) ~)
-    ::~&  entry
-    ::(dogalog-upsert entry)
+    ~&  src.bol
+    ::=/  entry  (entry [[%remote-id 0] [%sender src.bol]] ~)
+    ~&  'creating entry'
+    =/  entry  (entry src.bol 0 ~)
+    ~&  entry
+    =/  pupper  (dogalog-upsert entry)
+    ~&  pupper
+    =/  pupper  (dogalog-upsert entry)
+    :: TODO: whats actually going on here, what does %document do/effect?
+    :-  [%give %fact ~[/dogalog] %dogalog !>(pupper)]~
+    %=  state
+      dogalog  pupper
+    ==
   ::?:  (~(has by p.json) %id)
   ::  (poke-geojson-update json)
   ~
@@ -525,7 +532,6 @@
 ::
 ++  feature-create
   |=  jsonobject=json
-  ~&  'In feature create'
   =/  uncastfeature  (dejs-feature jsonobject)
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
