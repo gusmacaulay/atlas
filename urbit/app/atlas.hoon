@@ -50,7 +50,7 @@
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
-  ~&  "wire:"
+  ~&  "Wire:"
   ~&  wire
   ::~&  sign
   ::~&  `this
@@ -278,7 +278,6 @@
   |=  gjo=json::gj=@t
   ^-  (quip card _state)
   ~&  'In geojson poke'
-  ~&  gjo
   ::  de-json:html returns a unit, so use 'need' to get json
   ::=/  gjo  (need (de-json:html gj))
   ::  Check if is of json object form, otherwise can't pull apart
@@ -580,9 +579,15 @@
   ~&  id
   =/  docs  (~(put by documents.store) id document)
   =/  entry  (entry our.bol id (some id))
+  ~&  'entry'
+  ~&  entry
   =/  contents  (fridge (add 1 id) docs)
+  ~&  'contents'
+  ~&  contents
   ::=/  contents  [(fridge (add 1 id) docs) (dogalog-upsert entry)]
   =/  pupper  (dogalog-upsert entry)
+  ~&  'pupper ...'
+  ~&  pupper
   :: TODO: whats actually going on here, what does %document do/effect?
   :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
@@ -592,10 +597,14 @@
 ::
 ++  dogalog-upsert
   |=  =entry
-  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   ~&  'ENTRY TO BE INSERTED'
   ~&  entry
   ~&  'How to get the fridge id if it exists?'
+  :: TODO: check if fridge-id null, then either need it out, or generate/get next fridge-id
+  ::?~  fridge-id.entry
+  =/  id  (next-id 0)
+  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) id])
+  ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   (~(put by entries.dogalog) ref entry)
 ::
 ++  next-id
