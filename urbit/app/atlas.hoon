@@ -602,8 +602,12 @@
   ~&  'How to get the fridge id if it exists?'
   :: TODO: check if fridge-id null, then either need it out, or generate/get next fridge-id
   ::?~  fridge-id.entry
-  =/  id  (next-id 0)
-  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) id])
+  =/  id  (next-id nextid.store)
+  ~&  'ID'
+  ~&  id
+  =/  idtape  `@t`(scot %ud id)
+  ~&  idtape
+  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) idtape ~])
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   (~(put by entries.dogalog) ref entry)
 ::
