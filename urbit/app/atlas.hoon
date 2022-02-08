@@ -313,7 +313,7 @@
     ~&  pupper
     =/  pupper  (dogalog-upsert entry)
     :: TODO: whats actually going on here, what does %document do/effect?
-    :-  [%give %fact ~[/dogalog] %dogalog !>(pupper)]~
+    :-  [%give %fact ~[/dogalog] %json !>(pupper)]~
     %=  state
       dogalog  pupper
     ==
