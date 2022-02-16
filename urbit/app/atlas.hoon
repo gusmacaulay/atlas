@@ -129,9 +129,11 @@
   ~&  'FETCHNIG DOC'
   ~&  path
   :: TODO: is there a way to template these paths, below seems hacky
-  =/  id  0
-  ::=/  id  (slav %ud (snag 1 path))
-  ~&  'NOT DED'
+  ::=/  id  0
+  =/  idpath  (snag 1 path)
+  ~&  idpath
+  =/  id  (slav %ud idpath)
+  ~&  'NOT DED, REAL ID?'
   ~&  id
   ?:  ?=(~(has by documents.store) id)
     (fetch-actual id)
@@ -186,9 +188,9 @@
   ::=/  doc  (need (~(get by documents.store) 0))
   ::=/  jd  (geojson-document content.doc)
   ::[(print-doc (need (~(get by documents.store) 0))) state]
-  ::=/  printed  (~(run by documents.store) print-doc)
-  ::=/  keys  ~(key by documents.store)
-  ::~&  keys
+  =/  printed  (~(run by documents.store) print-doc)
+  =/  keys  ~(key by documents.store)
+  ~&  keys
   ~&  (fetch-dogalog ~)
   [~ state]
 ::
@@ -220,6 +222,7 @@
   ::=/  update  (update (dejs-update json))
   ::~&  id.update
   :: extract geojson
+  ~&  gj
   ?>  ?=([%o *] gj)
   ~&  gj
   ::=/  gj  (~(got by p.json) 'geojson')
@@ -232,7 +235,6 @@
   =/  entry  (entry sender (next-id nextid.store) fridge-id)
   ~&  'ENTRY'
   ~&  entry
-  ~&  'bout to do a thing'
   (fridge-create-entry [document entry])
   ::(fridge-create document)
 ::
@@ -256,13 +258,19 @@
   ::=/  path  (~(got by p.json) 'path')
   =/  remote-id  (so (~(got by p.json) 'remote-id'))
   ::=/  path  (need path-unit)
+  ~&  'unscowed'
   ~&  remote-id
+  ~&  's***-ed!'
+  ::~&  (scow %kn (slav %ud remote-id))
+  :: FIXME: using the remote-id twice is not right
+  =/  pax  `path`['fridge' remote-id remote-id ~]
+  ~&  pax
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
   ~&  sender
   :_  state
   ::~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %leave ~]]
-  ~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %watch /fridge/(scot %ta remote-id)]]
+  ~[[%pass pax %agent [sender %atlas] %watch pax]]
   ::~[[%pass /fridge %agent [sender %atlas] %poke %json !>(json)]]
   :::_  state
   ::~[[%pass path %agent [sender %atlas] %watch %json !>(json)]]
