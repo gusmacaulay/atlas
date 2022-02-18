@@ -315,14 +315,19 @@
     ~&  src.bol
     ::=/  entry  (entry [[%remote-id 0] [%sender src.bol]] ~)
     ~&  'creating entry'
-    =/  entry  (entry src.bol 0 ~)
+    =/  remote-id  (slav %ud (so (~(got by p.json) 'fridge-id')))
+    ~&  'remote-id'
+    ~&  remote-id
+    =/  entry  (entry src.bol remote-id ~)
     ~&  entry
     =/  pupper  (dogalog-upsert entry)
     ~&  pupper
-    =/  pupper  (dogalog-upsert entry)
+    =/  docs  documents.store
+    =/  contents  (fridge 0 docs)
     :: TODO: whats actually going on here, what does %document do/effect?
-    :-  [%give %fact ~[/dogalog] %json !>(pupper)]~
+    :-  [%give %fact ~[/fridge] %document !>(contents)]~
     %=  state
+      store  contents
       dogalog  pupper
     ==
   ::?:  (~(has by p.json) %id)
@@ -616,6 +621,7 @@
   =/  idtape  `@t`(scot %ud id)
   ~&  idtape
   =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) idtape ~])
+  ~&  ref
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   (~(put by entries.dogalog) ref entry)
 ::
