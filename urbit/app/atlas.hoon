@@ -137,13 +137,15 @@
   ~&  id
   ?:  ?=(~(has by documents.store) id)
     (fetch-actual id)
-  ~
+  !!
 ++  fetch-actual
   |=  =id
   =/  doc  (need (~(get by documents.store) id))
   ~&  doc
   =/  jd  (geojson-document content.doc)
   ::=/  jason  (en-json:html jd)
+  ~&  'actually!'
+  ~&  jd
   jd
 :: Returns the dogalog, as json
 ++  fetch-dogalog
@@ -246,8 +248,9 @@
   ~&  remote-id
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
+  =/  pax  `path`['fridge' remote-id ~]
   :_  state
-  ~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %leave ~]]
+  ~[[%pass pax %agent [sender %atlas] %leave ~]]
 ::
 :: Update the dogalog and pass %watch to the sender, which in turn sends a %fact
 :: which is handled in the recievers on-agent
@@ -263,7 +266,7 @@
   ~&  's***-ed!'
   ::~&  (scow %kn (slav %ud remote-id))
   :: FIXME: using the remote-id twice is not right
-  =/  pax  `path`['fridge' remote-id remote-id ~]
+  =/  pax  `path`['fridge' remote-id ~]
   ~&  pax
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
@@ -618,9 +621,9 @@
   =/  id  (next-id nextid.store)
   ~&  'ID'
   ~&  id
-  =/  idtape  `@t`(scot %ud id)
-  ~&  idtape
-  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) idtape ~])
+  ::=/  idtape  `@t`(scot %ud id)
+  ::~&  idtape
+  =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
   ~&  ref
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   (~(put by entries.dogalog) ref entry)
