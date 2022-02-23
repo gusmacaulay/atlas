@@ -259,11 +259,12 @@
   ^-  (quip card _state)
   ?>  ?=([%o *] json)
   ::=/  path  (~(got by p.json) 'path')
+  ~&  'Whats going on with our json?'
+  ~&  json
   =/  remote-id  (so (~(got by p.json) 'remote-id'))
   ::=/  path  (need path-unit)
-  ~&  'unscowed'
+  ~&  'remote-id'
   ~&  remote-id
-  ~&  's***-ed!'
   ::~&  (scow %kn (slav %ud remote-id))
   :: FIXME: using the remote-id twice is not right
   =/  pax  `path`['fridge' remote-id ~]
@@ -578,6 +579,8 @@
   |=  [=document =entry]
   ~&  'Im in ur fridge creating entries'
   =/  id  (next-id nextid.store)
+  ~&  'Fridge ID?'
+  ~&  id
   =/  docs  (~(put by documents.store) id document)
   =/  contents  (fridge (add 1 id) docs)
   =/  pupper  (dogalog-upsert entry)
@@ -594,6 +597,7 @@
   ~&  'Calculated ID;'
   ~&  id
   =/  docs  (~(put by documents.store) id document)
+  :: FIXME: need to create an entry with *remote* id
   =/  entry  (entry our.bol id (some id))
   ~&  'entry'
   ~&  entry
