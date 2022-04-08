@@ -141,11 +141,11 @@
 ++  fetch-actual
   |=  =id
   =/  doc  (need (~(get by documents.store) id))
-  ~&  doc
+  ::~&  doc
   =/  jd  (geojson-document content.doc)
   ::=/  jason  (en-json:html jd)
-  ~&  'actually!'
-  ~&  jd
+  ~&  'fetching <id>'
+  ::~&  jd
   jd
 :: Returns the dogalog, as json
 ++  fetch-dogalog
@@ -191,22 +191,28 @@
   ::=/  jd  (geojson-document content.doc)
   ::[(print-doc (need (~(get by documents.store) 0))) state]
   =/  printed  (~(run by documents.store) print-doc)
-  =/  keys  ~(key by documents.store)
-  ~&  keys
+  ::=/  keys  ~(key by documents.store)
+  ::~&  keys
   ~&  (fetch-dogalog ~)
   [~ state]
 ::
 ++  print-doc
   |=  =document
   =/  jd  (geojson-document content.document)
-  ~&  (crip (en-json:html jd))
+  ::  TODO: everything *but* the image
+  ?>  ?=([%o *] jd)
+  ::~&  (crip (en-json:html jd))
+  =/  properties  (~(got by p.jd) 'properties')
+  ?>  ?=([%o *] properties)
+  =/  jt  (~(got by p.properties) 'title')
+  ~&  jt
   document
 ::
 ++  send-poast
   |=  =json
   :: placeholder
   :: extract recipient
-  ~&  'SENDING PAOST'
+  ~&  'SENDING POAST'
   ?>  ?=([%o *] json)
   ::=/  recp-ta
   =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
@@ -224,14 +230,16 @@
   ::=/  update  (update (dejs-update json))
   ::~&  id.update
   :: extract geojson
-  ~&  gj
+  :: ~&  gj
   ?>  ?=([%o *] gj)
-  ~&  gj
+  ::~&  gj
   ::=/  gj  (~(got by p.json) 'geojson')
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
   =/  document  (document (next-id nextid.store) content)
   ~&  'NEXT ID'
+  ::  TODO: is this where the fridge overwrite problem occurs?
+  ::   ...or is it actually a problem in fetching?
   ~&  nextid.store
   =/  fridge-id  `(unit)`(some nextid.store)
   =/  entry  (entry sender (next-id nextid.store) fridge-id)
@@ -315,7 +323,7 @@
   ?>  ?=([%o *] json)
   ?:  (~(has by p.json) %fridge-id)
     ~&  'has fridge-id'
-    ~&  json
+    ::~&  json
     ~&  src.bol
     ::=/  entry  (entry [[%remote-id 0] [%sender src.bol]] ~)
     ~&  'creating entry'
@@ -602,8 +610,8 @@
   ~&  'entry'
   ~&  entry
   =/  contents  (fridge (add 1 id) docs)
-  ~&  'contents'
-  ~&  contents
+  ::~&  'contents'
+  ::~&  contents
   ::=/  contents  [(fridge (add 1 id) docs) (dogalog-upsert entry)]
   =/  pupper  (dogalog-upsert entry)
   ~&  'pupper ...'
@@ -632,6 +640,7 @@
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   (~(put by entries.dogalog) ref entry)
 ::
+:: FIXME: This is just setting a default of 0 by rather torturous means
 ++  next-id
   |=  next=id
   ~&  'THE CURRENT ID'

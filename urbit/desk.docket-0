@@ -3,8 +3,8 @@
     color+0x81.88c9
     image+'https://media.urbit.org/docs/userspace/dist/wut.svg'
     base+'atlas'
-    glob-ames+[~zod 0v0]
-    version+[0 0 1]
+    glob-ames+[~tagrev-lacmur-lomped-firser 0v0]
+    version+[0 0 4]
     website+'https://urbit.org/docs/userspace/dist/guide'
     license+'MIT'
 ==
