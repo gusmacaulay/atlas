@@ -267,8 +267,6 @@
   ^-  (quip card _state)
   ?>  ?=([%o *] json)
   ::=/  path  (~(got by p.json) 'path')
-  ~&  'Whats going on with our json?'
-  ~&  json
   =/  remote-id  (so (~(got by p.json) 'remote-id'))
   ::=/  path  (need path-unit)
   ~&  'remote-id'
@@ -593,7 +591,7 @@
   =/  contents  (fridge (add 1 id) docs)
   =/  pupper  (dogalog-upsert entry)
   :: TODO: whats actually going on here, what does %document do/effect?
-  ~&  contents
+  ::~&  contents
   :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
     store  contents
