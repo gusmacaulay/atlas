@@ -241,7 +241,9 @@
   ::  TODO: is this where the fridge overwrite problem occurs?
   ::   ...or is it actually a problem in fetching?
   ~&  nextid.store
-  =/  fridge-id  `(unit)`(some nextid.store)
+  =/  fridge-id  `(unit)`(some (next-id nextid.store))
+  ~&  'FRIDGE-ID UNIT'
+  ~&  fridge-id
   =/  entry  (entry sender (next-id nextid.store) fridge-id)
   ~&  'ENTRY'
   ~&  entry
@@ -641,7 +643,7 @@
 :: FIXME: This is just setting a default of 0 by rather torturous means
 ++  next-id
   |=  next=id
-  ~&  'THE CURRENT ID'
+  ~&  'THE CURRENT ID IS'
   ~&  next
   ^-  id
   =/  s  ~(val by documents.store)
