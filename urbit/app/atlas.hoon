@@ -646,9 +646,12 @@
   ^-  id
   =/  s  ~(val by documents.store)
   =/  l  (lent s)
-  ?:  =(l 0)
-    0
-  next
+  ~&  'LENGTH'
+  ~&  l
+  l
+  ::?:  =(l 0)
+  ::  0
+  ::next
   ::nextid.store
 ::
 ++  dejs-featurecollection
