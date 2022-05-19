@@ -108,10 +108,13 @@
 ++  on-save  on-save:def
 ++  on-load  on-load:def
 ++  on-leave  on-leave:def
-++  on-peek  on-peek:def
-::  |=  pax=path
-::  ~&  'ON PEEK!!'
-::  (on-peek:def pax)
+++  on-peek  ::on-peek:def
+  |=  pax=path
+  ^-  (unit (unit cage))
+  ~&  'ON PEEK!!'
+  =/  data  (fetch-dogalog pax)
+  ``noun+!>(data)
+  ::[~ ~]
 ::
 ++  on-fail   on-fail:def
 --
