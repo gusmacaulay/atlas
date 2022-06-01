@@ -112,8 +112,12 @@
   |=  pax=path
   ^-  (unit (unit cage))
   ~&  'ON PEEK!!'
-  =/  data  (fetch-dogalog pax)
-  ``noun+!>(data)
+  ~&  "Path is: {<(trip (snag 1 pax))>}"  ::pax is `path`~['x' 'fridge' '0'], (snag 1 pax) should return 'fridge'
+  ?~  (find "fridge" (trip (snag 1 pax)))  :: Check if it's a fridge peek.
+    ``noun+!>((fetch-dogalog pax))
+    ``noun+!>((fetch-document `path`(slag 1 pax)))  :: Use only the /fridge/0 portion of the address
+::  =/  data  (fetch-dogalog pax)
+::  ``noun+!>(data)
   ::[~ ~]
 ::
 ++  on-fail   on-fail:def
@@ -129,7 +133,7 @@
 ++  fetch-document
   |=  =path
   ^-  json
-  ~&  'FETCHNIG DOC'
+  ~&  'FETCHING DOC'
   ~&  path
   :: TODO: is there a way to template these paths, below seems hacky
   ::=/  id  0
@@ -148,7 +152,6 @@
   =/  jd  (geojson-document content.doc)
   ::=/  jason  (en-json:html jd)
   ~&  'fetching <id>'
-  ::~&  jd
   jd
 :: Returns the dogalog, as json
 ++  fetch-dogalog
