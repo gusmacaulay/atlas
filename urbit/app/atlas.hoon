@@ -12,6 +12,7 @@
 :: TODO; need to preserve state across restarts/upgrades
 +$  state-zero  [%0 store=fridge =dogalog]
 --
+%-  agent:dbug
 =|  state-zero
 =*  state  -
 %-  agent:dbug
@@ -105,8 +106,16 @@
       ::(poke-update:cc !<(json vase))
     ==
   [cards this]
-++  on-save  on-save:def
-++  on-load  on-load:def
+++  on-save
+  ^-  vase
+  !>(state)
+++  on-load
+  |=  old-state=vase
+  ^-  (quip card _this)
+  =/  old  !<(versioned-state old-state)
+  ?-  -.old
+    %0  `this(state old)
+  ==
 ++  on-leave  on-leave:def
 ++  on-peek  ::on-peek:def
   |=  pax=path
