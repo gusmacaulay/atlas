@@ -35,7 +35,6 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
-  ~&  'any on-watch '
   ::=/  base  `path`(snag 0 path)
   ::=/  id  (snag 1 path)
   ::=/  id
@@ -51,19 +50,14 @@
 ++  on-agent
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
-  ~&  "Wire:"
-  ~&  wire
   ::~&  sign
   ::~&  `this
-  ~&  'on agent!'
     ?+    wire  (on-agent:def wire sign)
         [%fridge *]
-        ~&  'fridge wire!'
       ?+  -.sign  (on-agent:def wire sign)
           %fact
         ::=/  json  !<(json q.cage.sign)
         ::~&  (crip (en-json:html json))
-        ~&  'woo'
         =^  cards  state
           (receive-poastcard:cc [!<(json q.cage.sign) src.bol])
         [cards this]
@@ -80,7 +74,6 @@
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
-  ~&  'poke received'
   =^  cards  state
     ~&  mark
     ?+    mark  (on-poke:def mark vase)
@@ -120,7 +113,6 @@
 ++  on-peek  ::on-peek:def
   |=  pax=path
   ^-  (unit (unit cage))
-  ~&  'ON PEEK!!'
   ?~  (find "fridge" (trip (snag 1 pax)))  :: Check if it's a fridge peek.
     ``json+!>((fetch-dogalog pax))
     ``json+!>((fetch-document `path`(slag 1 pax)))  :: pax is `path`~['x' 'fridge' '0'], use the /fridge/0 portion of the address
@@ -138,15 +130,10 @@
 ++  fetch-document
   |=  =path
   ^-  json
-  ~&  'FETCHING DOC'
-  ~&  path
   :: TODO: is there a way to template these paths, below seems hacky
   ::=/  id  0
   =/  idpath  (snag 1 path)
-  ~&  idpath
   =/  id  (slav %ud idpath)
-  ~&  'NOT DED, REAL ID?'
-  ~&  id
   ?:  ?=(~(has by documents.store) id)
     (fetch-actual id)
   !!
@@ -157,16 +144,15 @@
   ::~&  doc
   =/  jd  (geojson-document content.doc)
   ::=/  jason  (en-json:html jd)
-  ~&  'fetching {<id>}'
   jd
 :: Returns the dogalog, as json
 ++  fetch-dogalog
   |=  =path
   ^-  json
-  ~&  '...fetching the dogalog'
+  ::~&  '...fetching the dogalog'
   =/  pupper  ~(tap by entries.dogalog)
   =/  doggo  (turn pupper json-entry)
-  ~&  (crip (en-json:html (pairs:enjs doggo)))
+  ::~&  (crip (en-json:html (pairs:enjs doggo)))
   (pairs:enjs doggo)
   ::json-keys
 ::
@@ -224,12 +210,12 @@
   |=  =json
   :: placeholder
   :: extract recipient
-  ~&  'SENDING POAST'
+  ::~&  'SENDING POAST'
   ?>  ?=([%o *] json)
   ::=/  recp-ta
   =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
   =/  recipient  (need recp-unit)
-  ~&  recipient
+  ::~&  recipient
   :_  state
   ~[[%pass /poke-wire %agent [recipient %atlas] %poke %json !>(json)]]
   ::(fridge-delete 0)
@@ -238,7 +224,7 @@
 ::  Then if accepted, subscribe to it
 ++  receive-poastcard
   |=  [gj=json sender=@p]
-  ~&  'poastcard recieved!!'
+  ~&  'poastcard recieved.'
   ::=/  update  (update (dejs-update json))
   ::~&  id.update
   :: extract geojson
@@ -249,16 +235,16 @@
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
   =/  document  (document (next-id nextid.store) content)
-  ~&  'NEXT ID'
+  ::~&  'NEXT ID'
   ::  TODO: is this where the fridge overwrite problem occurs?
   ::   ...or is it actually a problem in fetching?
-  ~&  nextid.store
+  ::~&  nextid.store
   =/  fridge-id  `(unit)`(some (next-id nextid.store))
-  ~&  'FRIDGE-ID UNIT'
-  ~&  fridge-id
+  ::~&  'FRIDGE-ID UNIT'
+  ::~&  fridge-id
   =/  entry  (entry sender (next-id nextid.store) fridge-id)
-  ~&  'ENTRY'
-  ~&  entry
+  ::~&  'ENTRY'
+  ::~&  entry
   (fridge-create-entry [document entry])
   ::(fridge-create document)
 ::
@@ -283,15 +269,15 @@
   ::=/  path  (~(got by p.json) 'path')
   =/  remote-id  (so (~(got by p.json) 'remote-id'))
   ::=/  path  (need path-unit)
-  ~&  'remote-id'
-  ~&  remote-id
+  ::~&  'remote-id'
+  ::~&  remote-id
   ::~&  (scow %kn (slav %ud remote-id))
   :: FIXME: using the remote-id twice is not right
   =/  pax  `path`['fridge' remote-id ~]
-  ~&  pax
+  ::~&  pax
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
-  ~&  sender
+  ::~&  sender
   :_  state
   ::~[[%pass /fridge/(scot %ta remote-id) %agent [sender %atlas] %leave ~]]
   ~[[%pass pax %agent [sender %atlas] %watch pax]]
@@ -309,7 +295,7 @@
 ++  poke-geojson-create
   |=  gjo=json::gj=@t
   ^-  (quip card _state)
-  ~&  'In geojson poke'
+  ::~&  'In geojson poke'
   ::  de-json:html returns a unit, so use 'need' to get json
   ::=/  gjo  (need (de-json:html gj))
   ::  Check if is of json object form, otherwise can't pull apart
@@ -331,21 +317,21 @@
 ::
 ++  poke-json
   |=  =json
-  ~&  "poke json"
+  ::~&  "poke json"
   ?>  ?=([%o *] json)
   ?:  (~(has by p.json) %fridge-id)
-    ~&  'has fridge-id'
+    ::~&  'has fridge-id'
     ::~&  json
-    ~&  src.bol
+    ::~&  src.bol
     ::=/  entry  (entry [[%remote-id 0] [%sender src.bol]] ~)
-    ~&  'creating entry'
+    ::~&  'creating entry'
     =/  remote-id  (slav %ud (so (~(got by p.json) 'fridge-id')))
-    ~&  'remote-id'
-    ~&  remote-id
+    ::~&  'remote-id'
+    ::~&  remote-id
     =/  entry  (entry src.bol remote-id ~)
-    ~&  entry
+    ::~&  entry
     =/  pupper  (dogalog-upsert entry)
-    ~&  pupper
+    ::~&  pupper
     =/  docs  documents.store
     =/  contents  (fridge 0 docs)
     :: TODO: whats actually going on here, what does %document do/effect?
@@ -366,20 +352,20 @@
 ::  Geojson update, only works with feature for now
 ++  poke-geojson-update
   |=  =json
-  ~&  'geojson update'
+  ::~&  'geojson update'
   =/  update  (update (dejs-update json))
-  ~&  id.update
+  ::~&  id.update
   =/  feature  (feature (dejs-feature geojson.update))
   =/  content  (content [%feature feature])
   =/  document  (document id.update content)
-  ~&  document
+  ::~&  document
   (fridge-update document)
 ::  Delete operation, removes document from the store
 ++  poke-delete
   |=  =json
   ^-  (quip card _state)
   =/  id  (id (dejs-id json))
-  ~&  id
+  ::~&  id
   (fridge-delete id)
 ::
 ++  geojson-document
@@ -387,7 +373,7 @@
   ^-  json
   =/  geocontent  +3.content
   =/  ctype  +2.content
-  ~&  ctype
+  ::~&  ctype
   ?+    ctype  !!
     %featurecollection
   (geojson-featurecollection (featurecollection geocontent))
@@ -560,7 +546,7 @@
 ++  feature-collection-create
   |=  =json
   =/  uncast  (dejs-featurecollection json)
-  ~&  uncast
+  ::~&  uncast
   =/  featurecollection  (featurecollection uncast)
   =/  content  (content [%featurecollection featurecollection])
   =/  document  (document nextid.store content)
@@ -597,10 +583,10 @@
 :: create, TODO: this should not be mixed up in the geojson building stuff
 ++  fridge-create-entry
   |=  [=document =entry]
-  ~&  'Im in ur fridge creating entries'
+  ::~&  'Im in ur fridge creating entries'
   =/  id  (next-id nextid.store)
-  ~&  'Fridge ID?'
-  ~&  id
+  ::~&  'Fridge ID?'
+  ::~&  id
   =/  docs  (~(put by documents.store) id document)
   =/  contents  (fridge (add 1 id) docs)
   =/  pupper  (dogalog-upsert entry)
@@ -614,20 +600,20 @@
 ++  fridge-create
   |=  =document
   =/  id  (next-id nextid.store)
-  ~&  'Calculated ID;'
-  ~&  id
+  ::~&  'Calculated ID;'
+  ::~&  id
   =/  docs  (~(put by documents.store) id document)
   :: FIXME: need to create an entry with *remote* id
   =/  entry  (entry our.bol id (some id))
-  ~&  'entry'
-  ~&  entry
+  ::~&  'entry'
+  ::~&  entry
   =/  contents  (fridge (add 1 id) docs)
   ::~&  'contents'
   ::~&  contents
   ::=/  contents  [(fridge (add 1 id) docs) (dogalog-upsert entry)]
   =/  pupper  (dogalog-upsert entry)
-  ~&  'pupper ...'
-  ~&  pupper
+  ::~&  'pupper ...'
+  ::~&  pupper
   :: TODO: whats actually going on here, what does %document do/effect?
   :-  [%give %fact ~[/fridge] %document !>(contents)]~
   %=  state
@@ -637,31 +623,31 @@
 ::
 ++  dogalog-upsert
   |=  =entry
-  ~&  'ENTRY TO BE INSERTED'
-  ~&  entry
-  ~&  'How to get the fridge id if it exists?'
+  ::~&  'ENTRY TO BE INSERTED'
+  ::~&  entry
+  ::~&  'How to get the fridge id if it exists?'
   :: TODO: check if fridge-id null, then either need it out, or generate/get next fridge-id
   ::?~  fridge-id.entry
   =/  id  (next-id nextid.store)
-  ~&  'ID'
-  ~&  id
+  ::~&  'ID'
+  ::~&  id
   ::=/  idtape  `@t`(scot %ud id)
   ::~&  idtape
   =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
-  ~&  ref
+  ::~&  ref
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
   (~(put by entries.dogalog) ref entry)
 ::
 :: FIXME: This is just setting a default of 0 by rather torturous means
 ++  next-id
   |=  next=id
-  ~&  'THE CURRENT ID IS'
-  ~&  next
+  ::~&  'THE CURRENT ID IS'
+  ::~&  next
   ^-  id
   =/  s  ~(val by documents.store)
   =/  l  (lent s)
-  ~&  'LENGTH'
-  ~&  l
+  ::~&  'LENGTH'
+  ::~&  l
   l
   ::?:  =(l 0)
   ::  0
