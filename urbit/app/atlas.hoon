@@ -364,9 +364,28 @@
 ++  poke-delete
   |=  =json
   ^-  (quip card _state)
-  =/  id  (id (dejs-id json))
-  ::~&  id
-  (fridge-delete id)
+  ::  this should be a path now?
+  ?>  ?=([%o *] json)
+  =/  remote-id  (so (~(got by p.json) 'remote-id'))
+  ~&  remote-id
+  =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
+  =/  sender  (need sender-unit)
+  ~&  sender
+  =/  pax  `path`[`@t`(scot %p sender) 'atlas' 'fridge' remote-id ~]
+  ::=/  pax  (path (dejs-path json))
+  ::~&  pax
+  =/  new-fridge  (fridge-delete (id (slav %ud remote-id)))
+  ~&  'path?'
+  ~&  pax
+  =/  pupper  (dogalog-delete pax)
+  ::  update dogalog
+  :: TODO: whats actually going on here, what does %document do/effect?
+  ::~&  contents
+  :-  [%give %fact ~[/fridge] %document !>(new-fridge)]~
+  %=  state
+    store  new-fridge
+    dogalog  pupper
+  ==
 ::
 ++  geojson-document
   |=  =content
@@ -563,12 +582,12 @@
 ::
 ++  fridge-delete
   |=  =id
+  ^-  fridge
+  ~&  'fridge delete'
+  ::~&  (~(get by documents.store) id)
   =/  deleted  (~(del by documents.store) id)
   =/  contents  (fridge nextid.store deleted)
-  :-  [%give %fact ~[/fridge] %document !>(contents)]~
-  %=  state
-    store  contents
-  ==
+contents
 :: update is just delete + create with specified id
 ++  fridge-update
   |=  =document
@@ -621,8 +640,19 @@
     dogalog  pupper
   ==
 ::
+++  dogalog-delete
+  |=  =path
+  ::^-  dogalog
+  ~&  'dogalog delete'
+  ::=/  deleted  
+  ::(dogalog 
+  (~(del by entries.dogalog) path)
+  ::)
+  ::deleted
+::
 ++  dogalog-upsert
   |=  =entry
+  ::^-  dogalog
   ::~&  'ENTRY TO BE INSERTED'
   ::~&  entry
   ::~&  'How to get the fridge id if it exists?'
@@ -636,6 +666,7 @@
   =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
   ::~&  ref
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
+  ~&  entries.dogalog
   (~(put by entries.dogalog) ref entry)
 ::
 :: FIXME: This is just setting a default of 0 by rather torturous means
