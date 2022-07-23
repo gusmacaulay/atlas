@@ -1,10 +1,10 @@
-:~  title+'Atlas'
-    info+'A simple atlas app'
+:~  title+'Atlas/Poast'
+    info+'A simple spatial store (atlas) and poastcard app (poast)'
     color+0x81.88c9
     image+'https://i.ibb.co/Nn7K5kY/map1.png'
     base+'atlas'
     glob-ames+[~tagrev-lacmur-lomped-firser 0v0]
-    version+[0 0 16]
+    version+[0 0 18]
     website+'https://urbit.org/docs/userspace/dist/guide'
     license+'MIT'
 ==

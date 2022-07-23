@@ -59,7 +59,7 @@
         ::=/  json  !<(json q.cage.sign)
         ::~&  (crip (en-json:html json))
         =^  cards  state
-          (receive-poastcard:cc [!<(json q.cage.sign) src.bol])
+          (receive-poastcard:cc [!<(json q.cage.sign) src.bol wire])
         [cards this]
         ==
     ==
@@ -75,7 +75,7 @@
   |=  [=mark =vase]
   ^-  (quip card _this)
   =^  cards  state
-    ~&  mark
+  ::  ~&  mark
     ?+    mark  (on-poke:def mark vase)
       ::  %feature
       :: (poke-feature:cc !<(feature vase))
@@ -223,8 +223,13 @@
 ::  When a poastcard is received, should store a reference in the dogalog
 ::  Then if accepted, subscribe to it
 ++  receive-poastcard
-  |=  [gj=json sender=@p]
-  ~&  'poastcard recieved.'
+  |=  [gj=json sender=@p =wire]
+::~&  'poastcard recieved.'
+  ::~&  'wire'
+  ::~&  wire
+  =/  idpath  (snag 1 wire)
+  =/  remote-id  (slav %ud idpath)
+  ::~&  remote-id
   ::=/  update  (update (dejs-update json))
   ::~&  id.update
   :: extract geojson
@@ -238,11 +243,11 @@
   ::~&  'NEXT ID'
   ::  TODO: is this where the fridge overwrite problem occurs?
   ::   ...or is it actually a problem in fetching?
-  ::~&  nextid.store
+::~&  nextid.store
   =/  fridge-id  `(unit)`(some (next-id nextid.store))
   ::~&  'FRIDGE-ID UNIT'
   ::~&  fridge-id
-  =/  entry  (entry sender (next-id nextid.store) fridge-id)
+  =/  entry  (entry sender remote-id fridge-id)
   ::~&  'ENTRY'
   ::~&  entry
   (fridge-create-entry [document entry])
@@ -253,7 +258,7 @@
   ^-  (quip card _state)
   ?>  ?=([%o *] json)
   =/  remote-id  (so (~(got by p.json) 'remote-id'))
-  ~&  remote-id
+  ::~&  remote-id
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
   =/  pax  `path`['fridge' remote-id ~]
@@ -367,16 +372,16 @@
   ::  this should be a path now?
   ?>  ?=([%o *] json)
   =/  remote-id  (so (~(got by p.json) 'remote-id'))
-  ~&  remote-id
+  ::~&  remote-id
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
-  ~&  sender
+  ::~&  sender
   =/  pax  `path`[`@t`(scot %p sender) 'atlas' 'fridge' remote-id ~]
   ::=/  pax  (path (dejs-path json))
   ::~&  pax
   =/  new-fridge  (fridge-delete (id (slav %ud remote-id)))
-  ~&  'path?'
-  ~&  pax
+  ::~&  'path?'
+  ::~&  pax
   =/  pupper  (dogalog-delete pax)
   ::  update dogalog
   :: TODO: whats actually going on here, what does %document do/effect?
@@ -583,7 +588,7 @@
 ++  fridge-delete
   |=  =id
   ^-  fridge
-  ~&  'fridge delete'
+  ::~&  'fridge delete'
   ::~&  (~(get by documents.store) id)
   =/  deleted  (~(del by documents.store) id)
   =/  contents  (fridge nextid.store deleted)
@@ -643,7 +648,7 @@ contents
 ++  dogalog-delete
   |=  =path
   ::^-  dogalog
-  ~&  'dogalog delete'
+  ::~&  'dogalog delete'
   ::=/  deleted  
   ::(dogalog 
   (~(del by entries.dogalog) path)
@@ -666,7 +671,7 @@ contents
   =/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) ~])
   ::~&  ref
   ::=/  ref  (path [`@t`(scot %p sender.entry) 'atlas' 'fridge' `@t`(scot %ud remote-id.entry) fridge-id.entry])
-  ~&  entries.dogalog
+  ::~&  entries.dogalog
   (~(put by entries.dogalog) ref entry)
 ::
 :: FIXME: This is just setting a default of 0 by rather torturous means
