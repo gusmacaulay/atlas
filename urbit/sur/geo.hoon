@@ -1,4 +1,4 @@
-|%
+  |%
 ::  coord is the basic coordinate the underpins all geometries
 ::  lon,lat order! (GeoJSON standard)
 ::  is there a cost to having lon,lat variables rather than unnamed pair?
@@ -100,6 +100,7 @@
       :: =title
       :: owner=@p
       =content
+      :: pals=(list ship)
       :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
   ==
@@ -111,10 +112,21 @@
       owner=@p
       documents=(list document)
   ==
-::  Fridge, a space for sticking documents
+::  Fridge, a space for sticking documents (poastcards)
 +$  fridge
   $:  nextid=id
       documents=(map id document)
+  ==
+::  Dogalog, (like a c*talog but friendly)
++$  entry
+  $:  sender=@p
+      ::=title
+      remote-id=id
+      fridge-id=(unit id)
+  ==
+::
++$  dogalog
+  $:  entries=(map path entry)
   ==
 ::  Actions, for on-poke, ties in with mar/crud.hoon
 ::  following patter from gall guide poketime example
@@ -122,10 +134,25 @@
   $%  [%delete id]
       [%pleasant ~]
       [%update update]
+      [%share json]
+      [%accept json]
+      [%geojson json]
+      [%poastcard ~]
   ==
 ::
+::
++$  geojson
+  $:  geojson=json
+  ==
++$  create
+  $:  geojson=json
+  ==
 +$  update
   $:  =id
       geojson=json
+  ==
++$  share
+  $:  =id
+      pals=(list @p)
   ==
 --
