@@ -30,11 +30,12 @@ Full set of examples in tests.md, with ready to go cut and paste examples.
 
 ### Install urlayers
 
-urlayers is a standalone web app built from TBCS create-urbit-app (link).  
-Use yarn to build and start.  Currently hardcoded to attach to a fakezod.
+urlayers is a standalone web app built from TBCS create-urbit-app (https://github.com/tylershuster/cra-template-urbit).  
+Use yarn to build and start.  Currently hardcoded to attach to a fakezod.  You will need to run ```|cors-approve 'http://localhost:3000'``` on your fakezod.  You will need to modify line 80 of /urlayers-standalone/src/OLMapFragment.js to point to the correct port of your fakezod (sorry).
 
 ```
 $cd urlayers-standalone
+$yarn install
 $yarn start
 open localhost:3000 in browser
 ```
