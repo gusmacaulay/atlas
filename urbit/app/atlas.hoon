@@ -1,4 +1,4 @@
-/-  *geo
+/-  *geo, geo-zero
 /+  *server, default-agent, dbug
 =,  dejs:format
 ::
@@ -7,13 +7,17 @@
 
 +$  versioned-state
   $%  state-zero
+      state-one
   ==
 ::+$  state-zero  [%0 data=(list feature)]
 :: TODO; need to preserve state across restarts/upgrades
-+$  state-zero  [%0 store=fridge =dogalog]
+:: state-one includes a list of "pals" in each document  fridge[id, (map id document)] -> document[id, content, pals] -> pals[(list ship)] 
++$  state-zero  [%0 store=fridge:geo-zero =dogalog:geo-zero]
++$  state-one   [%1 store=fridge =dogalog]
 --
 %-  agent:dbug
-=|  state-zero
+:: =|  state-zero
+=|  state-one
 =*  state  -
 %-  agent:dbug
 ^-  agent:gall
@@ -106,9 +110,13 @@
   |=  old-state=vase
   ^-  (quip card _this)
   =/  old  !<(versioned-state old-state)
-  ?-  -.old
-    %0  `this(state old)
-  ==
+::    ~&  nextid.store.old
+::  ?~  -.old
+::      `this(state 1+[store dogalog]) :: mint-vain, code will never execute - so why are we getting null in the next line??  Or is it in preceeding line??
+    ?-  -.old
+      %1  `this(state old)
+      %0  `this(state 1+[[nextid.store.old (~(urn by documents.store.old) |=([key=@ud value=document.geo-zero] [id.value content.value ~]))] dogalog.old])
+    ==
 ++  on-leave  on-leave:def
 ++  on-peek  ::on-peek:def
   |=  pax=path

@@ -100,7 +100,7 @@
       :: =title
       :: owner=@p
       =content
-      pals=(list ship)
+      ::pals=(list ship)
       :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
   ==
