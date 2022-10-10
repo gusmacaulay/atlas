@@ -216,11 +216,23 @@
 ::
 ++  send-poast
   |=  =json
+  ::ASM - need to extract and validate the list of recipients (TODO: & groups)
+  ::ASM - then poke every recipient
+  ::ASM - and add every recipient to the recipient list in the document
+  ::ASM - cards should be sent with their recipient list emptied (for security reasons)
   :: placeholder
   :: extract recipient
   ::~&  'SENDING POAST'
   ?>  ?=([%o *] json)
   ::=/  recp-ta
+
+  ::ASM -- extract recipients (ships only at this stage)
+::  =/  recipient-string  (so (~(got by p.json) 'recipients')) ::returns the whole field '~zod,~fakezod,~sut,~let,~per'
+::  ~&  "Recipients: {<recipient-string>}"  
+::  =/  recipient-list  `(list recipient)`recipient-string
+::  ~&  "Recipients list: {<recipient-list>}"
+  ::------
+  
   =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
   =/  recipient  (need recp-unit)
   ::~&  recipient
@@ -247,7 +259,7 @@
   ::=/  gj  (~(got by p.json) 'geojson')
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
-  =/  document  (document (next-id nextid.store) content)
+  =/  document  (document (next-id nextid.store) content ~)
   ::~&  'NEXT ID'
   ::  TODO: is this where the fridge overwrite problem occurs?
   ::   ...or is it actually a problem in fetching?
@@ -590,7 +602,7 @@
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
   =/  id  (next-id nextid.store)
-  =/  document  (document id content) :: ~[~])
+  =/  document  (document id content ~) :: ~[~])
   (fridge-create document)
 ::
 ++  fridge-delete

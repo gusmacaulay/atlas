@@ -92,6 +92,14 @@
       [%feature feature]
       [%empty ~]
   ==
+::
+::  Recipient structure
+::  To create a list of ships and/or groups (eg lomped-firser/urdos) in document
++$  recipient
+  $%  [%ship ship]
+      [%group ship tape]
+  ==
+::
 ::  Container for GeoJSON objects
 ::  This should map closely a GeoJSON document, which is either a ..
 ::  geometrycollection or a feature collection or a geometry or a feature?
@@ -100,7 +108,8 @@
       :: =title
       :: owner=@p
       =content
-      pals=(list ship)
+::      pals=(list ship) :: (list recipient) where recipient is either ship or group and group is group reference (ship & group name)
+      recipients=(list recipient)
       :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
   ==
