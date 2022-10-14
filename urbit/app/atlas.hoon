@@ -110,9 +110,6 @@
   |=  old-state=vase
   ^-  (quip card _this)
   =/  old  !<(versioned-state old-state)
-::    ~&  nextid.store.old
-::  ?~  -.old
-::      `this(state 1+[store dogalog]) :: mint-vain, code will never execute - so why are we getting null in the next line??  Or is it in preceeding line??
     ?-  -.old
       %1  `this(state old)
       %0  `this(state 1+[[nextid.store.old (~(urn by documents.store.old) |=([key=@ud value=document.geo-zero] [id.value content.value ~]))] dogalog.old])
@@ -216,8 +213,6 @@
 ::
 ++  send-poast
   |=  =json
-  ::ASM - need to extract and validate the list of recipients (TODO: & groups)
-  ::ASM - then poke every recipient
   ::ASM - and add every recipient to the recipient list in the document
   ::ASM - cards should be sent with their recipient list emptied (for security reasons)
   :: placeholder
@@ -226,19 +221,17 @@
   ?>  ?=([%o *] json)
   ::=/  recp-ta
 
-  ::ASM -- extract recipients (ships only at this stage)
-::  =/  recipient-string  (so (~(got by p.json) 'recipients')) ::returns the whole field '~zod,~fakezod,~sut,~let,~per'
-::  ~&  "Recipients: {<recipient-string>}"  
-::  =/  recipient-list  `(list recipient)`recipient-string
-::  ~&  "Recipients list: {<recipient-list>}"
-  ::------
-  
-  =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
-  =/  recipient  (need recp-unit)
-  ::~&  recipient
+  =/  recipient-list  (dejs-recipients json)
+  ~&  "recipient-list is: {<recipient-list>}"
+
+  ::  Skim the recipient-list an remove any ship/group recipients, as we can't send to groups yet
+  ::  Then extract only the ship names (this will also extract ship names from ship/group)
+  =/  skimmed-recipients  `(list recipient)`(skim recipient-list |=(a=recipient =(-.a %ship)))
+  =/  ships-only  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
+
+  ~&  "Sending cards to: {<ships-only>}"
   :_  state
-  ~[[%pass /poke-wire %agent [recipient %atlas] %poke %json !>(json)]]
-  ::(fridge-delete 0)
+  (turn ships-only |=(s=@p [%pass /poke-wire %agent [s %atlas] %poke %json !>(json)]))
 ::
 ::  When a poastcard is received, should store a reference in the dogalog
 ::  Then if accepted, subscribe to it
@@ -709,6 +702,24 @@ contents
   ::  0
   ::next
   ::nextid.store
+::
+++  dejs-recipients
+  |=  =json
+  ?>  ?=([%o *] json)
+  =/  recipients-js  (need (~(get by p.json) 'recipients'))
+  ?>  ?=([%a *] recipients-js)
+  =/  recipients  ((list recipient) (turn p.recipients-js dejs-recipient))
+  recipients
+::
+++  dejs-recipient
+  |=  =json
+  =/  recipient-tpe  (sa json)
+  =/  idx  (find "/" recipient-tpe)
+  ?~  idx
+    [%ship `@p`(slav %p (crip recipient-tpe))]                   ::  [%ship ~sampel-palnet]
+    =/  recipient-ship  (scag (need idx) recipient-tpe)
+    =/  recipient-group  (slag (need idx) recipient-tpe)
+    [%group `@p`(slav %p (crip recipient-ship)) recipient-group] ::  [%group ~sampel-palnet "/agroup"]
 ::
 ++  dejs-featurecollection
   |=  =json
