@@ -106,6 +106,7 @@
 ++  on-save
   ^-  vase
   !>(state)
+::++  on-load  on-load:def
 ++  on-load
   |=  old-state=vase
   ^-  (quip card _this)
@@ -148,8 +149,10 @@
   =/  doc  (need (~(get by documents.store) id))
   ::~&  doc
   =/  jd  (geojson-document content.doc)
-  ::=/  jason  (en-json:html jd)
-  jd
+  :: Check that scrying/subscribing ship is either the owner, or listed as a valid recipient - else crash!
+  ?:  ?|((~(has in recipients.doc) [%ship src.bol]) =(src.bol our.bol))
+    jd
+    !!
 :: Returns the dogalog, as json
 ++  fetch-dogalog
   |=  =path
@@ -213,24 +216,25 @@
 ::
 ++  send-poast
   |=  =json
-  ::ASM - and add every recipient to the recipient list in the document
-  ::ASM - cards should be sent with their recipient list emptied (for security reasons)
-  :: placeholder
-  :: extract recipient
   ::~&  'SENDING POAST'
   ?>  ?=([%o *] json)
-  ::=/  recp-ta
 
   =/  recipient-list  (dejs-recipients json)
   ~&  "recipient-list is: {<recipient-list>}"
 
-  ::  Skim the recipient-list an remove any ship/group recipients, as we can't send to groups yet
+  ::  Skim the recipient-list and remove any ship/group recipients, as we can't send to groups yet.
   ::  Then extract only the ship names (this will also extract ship names from ship/group)
   =/  skimmed-recipients  `(list recipient)`(skim recipient-list |=(a=recipient =(-.a %ship)))
   =/  ships-only  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
 
   ~&  "Sending cards to: {<ships-only>}"
-  :_  state
+
+  :: JSON parse the fridge-id that's recieved from the front-end as a json *string*
+  =/  this-id  (slav %ud (so (~(got by p.json) 'fridge-id')))
+
+  :: Jab the *list* of new recipients into the recipient *set* of the current document
+  :: and create and send out a poke for every recipient
+  :_  [-.state [nextid.store (~(jab by documents.store) this-id |=(e=document [-.e +<.e (~(gas in recipients.e) recipient-list)]))] dogalog]
   (turn ships-only |=(s=@p [%pass /poke-wire %agent [s %atlas] %poke %json !>(json)]))
 ::
 ::  When a poastcard is received, should store a reference in the dogalog
@@ -252,7 +256,7 @@
   ::=/  gj  (~(got by p.json) 'geojson')
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
-  =/  document  (document (next-id nextid.store) content ~)
+  =/  document  (document (next-id nextid.store) content ~)    ::  list of recipients is not sent with the card.
   ::~&  'NEXT ID'
   ::  TODO: is this where the fridge overwrite problem occurs?
   ::   ...or is it actually a problem in fetching?
@@ -709,6 +713,7 @@ contents
   =/  recipients-js  (need (~(get by p.json) 'recipients'))
   ?>  ?=([%a *] recipients-js)
   =/  recipients  ((list recipient) (turn p.recipients-js dejs-recipient))
+::  =/  recipients  (silt ((list recipient) (turn p.recipients-js dejs-recipient)))
   recipients
 ::
 ++  dejs-recipient

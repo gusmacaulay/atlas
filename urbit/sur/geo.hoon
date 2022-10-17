@@ -109,7 +109,7 @@
       :: owner=@p
       =content
 ::      pals=(list ship) :: (list recipient) where recipient is either ship or group and group is group reference (ship & group name)
-      recipients=(list recipient)
+      recipients=(set recipient)
       :: bbox, optional --> this should be part of geothingy?
       ::list/map geometrycollection or featurecollection
   ==
