@@ -1,4 +1,4 @@
-  |%
+|%
 ::  coord is the basic coordinate the underpins all geometries
 ::  lon,lat order! (GeoJSON standard)
 ::  is there a cost to having lon,lat variables rather than unnamed pair?
