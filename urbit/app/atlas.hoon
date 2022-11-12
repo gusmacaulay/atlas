@@ -1,4 +1,4 @@
-/-  *geo
+/-  *geo, geo-zero
 /+  *server, default-agent, dbug
 =,  dejs:format
 ::
@@ -7,13 +7,17 @@
 
 +$  versioned-state
   $%  state-zero
+      state-one
   ==
 ::+$  state-zero  [%0 data=(list feature)]
 :: TODO; need to preserve state across restarts/upgrades
-+$  state-zero  [%0 store=fridge =dogalog]
+:: state-one includes a list of "pals" in each document  fridge[id, (map id document)] -> document[id, content, pals] -> pals[(list ship)] 
++$  state-zero  [%0 store=fridge:geo-zero =dogalog:geo-zero]
++$  state-one   [%1 store=fridge =dogalog]
 --
 %-  agent:dbug
-=|  state-zero
+:: =|  state-zero
+=|  state-one
 =*  state  -
 %-  agent:dbug
 ^-  agent:gall
@@ -102,13 +106,15 @@
 ++  on-save
   ^-  vase
   !>(state)
+::++  on-load  on-load:def
 ++  on-load
   |=  old-state=vase
   ^-  (quip card _this)
   =/  old  !<(versioned-state old-state)
-  ?-  -.old
-    %0  `this(state old)
-  ==
+    ?-  -.old
+      %1  `this(state old)
+      %0  `this(state 1+[[nextid.store.old (~(urn by documents.store.old) |=([key=@ud value=document.geo-zero] [id.value content.value ~]))] dogalog.old])
+    ==
 ++  on-leave  on-leave:def
 ++  on-peek  ::on-peek:def
   |=  pax=path
@@ -143,8 +149,14 @@
   =/  doc  (need (~(get by documents.store) id))
   ::~&  doc
   =/  jd  (geojson-document content.doc)
-  ::=/  jason  (en-json:html jd)
-  jd
+::ASM
+  =/  jd-new  (geojson-document-new doc) ::need to send whole doc so we can extract user list
+
+  :: Check that scrying/subscribing ship is either the owner, or listed as a valid recipient - else crash!
+  ?:  ?|((~(has in recipients.doc) [%ship src.bol]) =(src.bol our.bol))
+::    jd
+    jd-new
+    !!
 :: Returns the dogalog, as json
 ++  fetch-dogalog
   |=  =path
@@ -208,17 +220,26 @@
 ::
 ++  send-poast
   |=  =json
-  :: placeholder
-  :: extract recipient
   ::~&  'SENDING POAST'
   ?>  ?=([%o *] json)
-  ::=/  recp-ta
-  =/  recp-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'recipients')))
-  =/  recipient  (need recp-unit)
-  ::~&  recipient
-  :_  state
-  ~[[%pass /poke-wire %agent [recipient %atlas] %poke %json !>(json)]]
-  ::(fridge-delete 0)
+
+  =/  recipient-list  (dejs-recipients json)
+  ::~&  "recipient-list is: {<recipient-list>}"
+
+  ::  Skim the recipient-list and remove any ship/group recipients, as we can't send to groups yet.
+  ::  Then extract only the ship names (this will also extract ship names from ship/group)
+  =/  skimmed-recipients  `(list recipient)`(skim recipient-list |=(a=recipient =(-.a %ship)))
+  =/  ships-only  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
+
+  ::~&  "Sending cards to: {<ships-only>}"
+
+  :: JSON parse the fridge-id that's recieved from the front-end as a json *string*
+  =/  this-id  (slav %ud (so (~(got by p.json) 'fridge-id')))
+
+  :: Jab the *list* of new recipients into the recipient *set* of the current document
+  :: and create and send out a poke for every recipient
+  :_  [-.state [nextid.store (~(jab by documents.store) this-id |=(e=document [-.e +<.e (~(gas in recipients.e) recipient-list)]))] dogalog]
+  (turn ships-only |=(s=@p [%pass /poke-wire %agent [s %atlas] %poke %json !>(json)]))
 ::
 ::  When a poastcard is received, should store a reference in the dogalog
 ::  Then if accepted, subscribe to it
@@ -239,7 +260,7 @@
   ::=/  gj  (~(got by p.json) 'geojson')
   =/  feature  (feature (dejs-feature gj))
   =/  content  (content [%feature feature])
-  =/  document  (document (next-id nextid.store) content)
+  =/  document  (document (next-id nextid.store) content ~)    ::  list of recipients is not sent with the card.
   ::~&  'NEXT ID'
   ::  TODO: is this where the fridge overwrite problem occurs?
   ::   ...or is it actually a problem in fetching?
@@ -409,6 +430,62 @@
   (geojson-geometrycollection (geometrycollection geocontent))
   ==
 ::
+:: ASM
+++  geojson-document-new
+  |=  =document
+  ^-  json
+  =/  geocontent  +3.content.document
+  =/  ctype  +2.content.document
+
+  :: if it's a feature, *add* recipients.document to properties.geocontent (feature)
+  :: it will be a chunk of $json and have the image & text data in it.
+  :: we need to add a comma/space separated list of recipients, ideally without a lot
+  :: of mucking around, because this chunk of json will be big due to the image 
+
+  =/  the-feature  (feature geocontent)
+
+  :: it's in json(urbit) format.
+  :: decode to a map and add the recipients
+  =/  decoded-properties  ((om sa) properties.the-feature)
+
+  =/  recipients-list  ~(tap in recipients.document)
+  =/  skimmed-recipients  `(list recipient)`(skim recipients-list |=(a=recipient =(-.a %ship)))
+  =/  ship-list-p  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
+  =/  ship-list-t  `(list tape)`(turn ship-list-p |=(a=@p (scow %p a)))
+  :: actually want to convert the list of planets to a tape... "~zod ~per ~bla"
+  =/  insert-list  `tape`(reel ship-list-t |=([b=tape c=tape] (weld b (weld "," c))))
+
+
+::  ~&  "ship-list-t: {<ship-list-t>}"
+::  ~&  "insert-list: {<insert-list>}"
+
+  =/  new-properties  (~(put by decoded-properties) 'recipients' insert-list)
+
+::  ~&  "decoded-properties - date: {<(~(get by decoded-properties) 'date')>}"
+::  ~&  "new-properties - recipients: {<(~(get by new-properties) 'recipients')>}"
+::  ~&  "all the keys : {<~(key by new-properties)>}"
+
+  =/  raw-props-list  ~(tap by new-properties)
+  =/  json-props-list  `(list [@t json])`(turn raw-props-list |=(a=[@t tape] [-.a s+(crip +.a)])) ::assumes all properties are tapes/strings
+  =/  encoded-pairs  (pairs:enjs:format json-props-list)
+::  ~&  "encoded-pairs: {<(en-json:html encoded-pairs)>}" ::json string as tape and we're back to where we started.
+
+::  =.  properties.the-feature  encoded-pairs
+  =/  new-geocontent  the-feature(properties encoded-pairs)
+
+  ?+    ctype  !!
+    %featurecollection
+  (geojson-featurecollection (featurecollection geocontent))
+    %feature
+  (geojson-feature new-geocontent)
+::  (geojson-feature (feature geocontent))
+    %geometry
+  (geojson-geometry (geometry geocontent))
+    %geometrycollection
+  (geojson-geometrycollection (geometrycollection geocontent))
+  ==
+:::
+:::
 ++  geojson-featurecollection
   |=  fc=featurecollection
   ^-  json
@@ -582,7 +659,7 @@
   =/  feature  (feature uncastfeature)
   =/  content  (content [%feature feature])
   =/  id  (next-id nextid.store)
-  =/  document  (document id content) :: ~[~])
+  =/  document  (document id content ~) :: ~[~])
   (fridge-create document)
 ::
 ++  fridge-delete
@@ -689,6 +766,25 @@ contents
   ::  0
   ::next
   ::nextid.store
+::
+++  dejs-recipients
+  |=  =json
+  ?>  ?=([%o *] json)
+  =/  recipients-js  (need (~(get by p.json) 'recipients'))
+  ?>  ?=([%a *] recipients-js)
+  =/  recipients  ((list recipient) (turn p.recipients-js dejs-recipient))
+::  =/  recipients  (silt ((list recipient) (turn p.recipients-js dejs-recipient)))
+  recipients
+::
+++  dejs-recipient
+  |=  =json
+  =/  recipient-tpe  (sa json)
+  =/  idx  (find "/" recipient-tpe)
+  ?~  idx
+    [%ship `@p`(slav %p (crip recipient-tpe))]                   ::  [%ship ~sampel-palnet]
+    =/  recipient-ship  (scag (need idx) recipient-tpe)
+    =/  recipient-group  (slag (need idx) recipient-tpe)
+    [%group `@p`(slav %p (crip recipient-ship)) recipient-group] ::  [%group ~sampel-palnet "/agroup"]
 ::
 ++  dejs-featurecollection
   |=  =json
