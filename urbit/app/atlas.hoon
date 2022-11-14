@@ -148,8 +148,7 @@
   ^-  json
   =/  doc  (need (~(get by documents.store) id))
   ::~&  doc
-  =/  jd  (geojson-document content.doc)
-::ASM
+::  =/  jd  (geojson-document content.doc)
   =/  jd-new  (geojson-document-new doc) ::need to send whole doc so we can extract user list
 
   :: Check that scrying/subscribing ship is either the owner, or listed as a valid recipient - else crash!
@@ -246,8 +245,7 @@
 ++  receive-poastcard
   |=  [gj=json sender=@p =wire]
 ::~&  'poastcard recieved.'
-  ::~&  'wire'
-  ::~&  wire
+::  ~&  "Wire is: {<(crip wire)>}"
   =/  idpath  (snag 1 wire)
   =/  remote-id  (slav %ud idpath)
   ::~&  remote-id
@@ -355,17 +353,26 @@
     ::~&  'remote-id'
     ::~&  remote-id
     =/  entry  (entry src.bol remote-id ~)
-    ::~&  entry
+    ::~&  "Entry is {<entry>}"
     =/  pupper  (dogalog-upsert entry)
     ::~&  pupper
     =/  docs  documents.store
     =/  contents  (fridge 0 docs)
-    :: TODO: whats actually going on here, what does %document do/effect?
-    :-  [%give %fact ~[/fridge] %document !>(contents)]~
-    %=  state
-      store  contents
-      dogalog  pupper
-    ==
+
+    ::Check if poastcard is already in the dogalog (compare unique paths)
+    ::If it is, then simply ignore it and return unchanged state.
+    =/  remote-id-t  `tape`(sa (~(got by p.json) 'fridge-id'))
+    =/  path-compare  `tape`(zing ["/" `tape`(scow %p src.bol) "/atlas/fridge/" remote-id-t ~])
+    =/  path-compare-p  `path`(stab (crip path-compare))
+
+    ?:  (~(has by entries.dogalog) path-compare-p)
+        :-  [%give %fact ~[/fridge] %document !>(contents)]~
+        state
+      :-  [%give %fact ~[/fridge] %document !>(contents)]~
+      %=  state
+        store  contents
+        dogalog  pupper
+      ==
   ::?:  (~(has by p.json) %id)
   ::  (poke-geojson-update json)
   ~
@@ -430,7 +437,6 @@
   (geojson-geometrycollection (geometrycollection geocontent))
   ==
 ::
-:: ASM
 ++  geojson-document-new
   |=  =document
   ^-  json
