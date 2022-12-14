@@ -163,7 +163,7 @@
 ::
 +$  update
   $%  [%change change]
-      [%delete =id]
+      [%delete =path]
   ==
 
 +$  change
