@@ -43,8 +43,42 @@
 ++  on-watch
   |=  pax=path
   ^-  (quip card _this)
+  ~&  "In on-watch with path {<pax>} and src.bol {<src.bol>}"
   ?+    pax  (on-watch:def pax)
       [%fridge *]
+    ~&  "In on-watch -> %fridge with src.bol {<src.bol>} and our.bol {<our.bol>}" :: this gives correct src.bol
+    =/  path-id  +.pax
+    =/  fridge-id  `@ud`(slav %ud (crip +.pax))
+    =/  doc  (~(got by documents.store) fridge-id)
+
+    ::  Scry for groups that user is a member of (equivalent to http://localhost:8081/~/scry/groups/groups.json)
+    =/  jsn  .^(json %gx /~wep/groups/(scot %da now.bol)/groups/json)
+    ?>  ?=([%o *] jsn)
+
+    ::  Decode json to get a map of groups, each group containing a fleet (map of ships)
+    =/  groups  `(map @t (map @t @da))`((om (ot ~[fleet+(om (ot ~[joined+di]))])) jsn)
+
+::ASM - have to filter the groups down to those that the card has been sent to before accumulating
+
+    ::  Accumulate all fleets into one set (all valid recipients from all valid groups).
+    =/  fleet-acc-t  `(set @t)`(~(rep by groups) |=([[g-key=@t g-val=(map @t @da)] acc=(set @t)] `(set @t)`(~(uni in ~(key by g-val)) acc))) 
+    =/  fleet-acc  `(set recipient)`(~(run in fleet-acc-t) |=(shp=@t [%ship `@p`(slav %p shp)]))
+    ~&  "fleet-acc: {<fleet-acc>}"
+
+    ::  Combine set of valid ships in groups, with set of valid direct recipients
+    ::  Convert recipients set to list to skim off ships only
+    =/  recipient-list  ~(tap in recipients.doc)
+    =/  skimmed-recipients  `(list recipient)`(skim recipient-list |=(a=recipient =(-.a %ship)))
+
+    ::  Convert back to a set to union with fleet
+    =/  recipients-ships  `(set recipient)`(silt skimmed-recipients)
+    =/  fleet-all  (~(uni in fleet-acc) recipients-ships)
+    ~&  "fleet-all is: {<fleet-all>}"
+
+::    ?.  (~(has in recipients.doc) [%ship src.bol]) :: just for now check for ships only.
+    ?.  (~(has in fleet-all) [%ship src.bol]) :: check that ship requesting card is a valid recipient.
+      ~&  "[on-watch]: Request from {<src.bol>} denied, not a valid recipient."
+      !!  :: crash - request denied, not a valid recipient
     :_  this
     [%give %fact ~ %json !>((fetch-document pax))]~
       [%dogalog *]
@@ -182,12 +216,8 @@
   ::~&  doc
 ::  =/  jd  (geojson-document content.doc)
   =/  jd-new  (geojson-document-new doc) ::need to send whole doc so we can extract user list
-
-  :: Check that scrying/subscribing ship is either the owner, or listed as a valid recipient - else crash!
-  ?:  ?|((~(has in recipients.doc) [%ship src.bol]) =(src.bol our.bol))
 ::    jd
     jd-new
-    !!
 :: Returns the dogalog, as json
 ++  fetch-dogalog
   |=  =path
@@ -261,7 +291,7 @@
   =/  this-id  (slav %ud (so (~(got by p.json) 'fridge-id')))
 
   :: Jab the *list* of new recipients into the recipient *set* of the current document
-  :: and create and send out a poke for every recipient
+  :: and create and send out a poke for every ship recipient (group recipients do not get poked)
 
   :_  [-.state [nextid.store (~(jab by documents.store) this-id |=(e=document [-.e +<.e (~(gas in recipients.e) recipient-list)]))] dogalog]
   (turn ships-only |=(s=@p [%pass /poke-wire %agent [s %atlas] %poke %json !>(json)]))
@@ -308,7 +338,7 @@
   =/  pax  `path`['fridge' remote-id ~]
   =/  sender-unit  `(unit @p)`(slaw %p (so (~(got by p.json) 'sender')))
   =/  sender  (need sender-unit)
-::  ~&  "Subscribing to {<pax>} at ship {<sender>}"
+  ~&  "Subscribing to {<pax>} at ship {<sender>}"
   :_  state
   ~[[%pass pax %agent [sender %atlas] %watch pax]]
 ::
@@ -478,11 +508,18 @@
   :: Decode document content properties so that we can add in recipients
   =/  decoded-properties  ((om sa) properties.the-feature)
 
-  :: Reduce the recipients down to a simple list of planet names as tapes  
-  =/  skimmed-recipients  `(list recipient)`(skim recipients-list |=(a=recipient =(-.a %ship)))
-  =/  ship-list-p  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
-  =/  ship-list-t  `(list tape)`(turn ship-list-p |=(a=@p (scow %p a)))
-  =/  insert-list  `tape`(reel ship-list-t |=([b=tape c=tape] ?:(=(c "") (weld b c) (weld b (weld "," c)))))
+::ASM - remove
+::  :: Reduce the recipients down to a simple list of planet names as tapes  
+::  =/  skimmed-recipients  `(list recipient)`(skim recipients-list |=(a=recipient =(-.a %ship)))
+::  =/  ship-list-p  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
+::  =/  ship-list-t  `(list tape)`(turn ship-list-p |=(a=@p (scow %p a)))
+::  =/  insert-list  `tape`(reel ship-list-t |=([b=tape c=tape] ?:(=(c "") (weld b c) (weld b (weld "," c)))))
+::------------
+
+:: Reduce recipients down to a simple tape, of both ships & groups
+  =/  recipient-tape  `(list tape)`(turn recipients-list |=(a=recipient ?-(-.a %ship (scow %p +.a), %group (weld (scow %p +<.a) +>.a))))
+  :: comma separated list as a tape
+  =/  insert-list  `tape`(reel recipient-tape |=([b=tape c=tape] ?:(=(c "") (weld b c) (weld b (weld "," c))))) 
 
   :: Insert the list of recipients into the document content properties
   =/  new-properties  (~(put by decoded-properties) 'recipients' insert-list)
