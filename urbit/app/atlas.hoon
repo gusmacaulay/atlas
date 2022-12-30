@@ -46,36 +46,49 @@
   ~&  "In on-watch with path {<pax>} and src.bol {<src.bol>}"
   ?+    pax  (on-watch:def pax)
       [%fridge *]
-    ~&  "In on-watch -> %fridge with src.bol {<src.bol>} and our.bol {<our.bol>}" :: this gives correct src.bol
     =/  path-id  +.pax
     =/  fridge-id  `@ud`(slav %ud (crip +.pax))
     =/  doc  (~(got by documents.store) fridge-id)
 
+    ::  This is the bulk of the permissioning process
+    ::  We scry for a list of groups that the ship is a member of
+    ::  and use that along with the recipients.document.store to
+    ::  determine if a ship has access to a given card.
+
     ::  Scry for groups that user is a member of (equivalent to http://localhost:8081/~/scry/groups/groups.json)
-    =/  jsn  .^(json %gx /~wep/groups/(scot %da now.bol)/groups/json)
+    =/  jsn  .^(json %gx /(scot %p our.bol)/groups/(scot %da now.bol)/groups/json)
+
     ?>  ?=([%o *] jsn)
 
     ::  Decode json to get a map of groups, each group containing a fleet (map of ships)
     =/  groups  `(map @t (map @t @da))`((om (ot ~[fleet+(om (ot ~[joined+di]))])) jsn)
 
-::ASM - have to filter the groups down to those that the card has been sent to before accumulating
+    :: map to list
+    =/  groups-list  ~(tap by groups)
+    :: convert keys
+    =/  groups-list-rec  `(list [recipient (map @t @da)])`(turn groups-list |=([key=@t val=(map @t @da)] =/(idx (need (find "/" (trip key))) [`recipient`[%group `@p`(slav %p (crip (scag idx (trip key)))) `tape`(slag idx (trip key))] val])))
+
+    :: filter by skimming recipients list for the poastcard
+    =/  recipient-list-gr  `(list recipient)`~(tap in recipients.doc)
+    =/  recipient-groups  `(list recipient)`(skim recipient-list-gr |=(a=recipient =(-.a %group)))
+    =/  filtered-groups  (skim groups-list-rec |=([g=recipient v=(map @t @da)] ?~((find [g]~ recipient-groups) %.n %.y)))
+
+    :: list to map
+    =/  groups-rec  `(map recipient (map @t @da))`(malt filtered-groups)
 
     ::  Accumulate all fleets into one set (all valid recipients from all valid groups).
-    =/  fleet-acc-t  `(set @t)`(~(rep by groups) |=([[g-key=@t g-val=(map @t @da)] acc=(set @t)] `(set @t)`(~(uni in ~(key by g-val)) acc))) 
+    =/  fleet-acc-t  `(set @t)`(~(rep by groups-rec) |=([[key=recipient val=(map @t @da)] acc=(set @t)] `(set @t)`(~(uni in ~(key by val)) acc)))
     =/  fleet-acc  `(set recipient)`(~(run in fleet-acc-t) |=(shp=@t [%ship `@p`(slav %p shp)]))
-    ~&  "fleet-acc: {<fleet-acc>}"
 
-    ::  Combine set of valid ships in groups, with set of valid direct recipients
+    ::  Combine set of valid ships in groups, with set of valid direct recipients (sets provide deduplication)
     ::  Convert recipients set to list to skim off ships only
     =/  recipient-list  ~(tap in recipients.doc)
     =/  skimmed-recipients  `(list recipient)`(skim recipient-list |=(a=recipient =(-.a %ship)))
 
-    ::  Convert back to a set to union with fleet
+    ::  Convert ships only list back to a set to union with fleet
     =/  recipients-ships  `(set recipient)`(silt skimmed-recipients)
     =/  fleet-all  (~(uni in fleet-acc) recipients-ships)
-    ~&  "fleet-all is: {<fleet-all>}"
 
-::    ?.  (~(has in recipients.doc) [%ship src.bol]) :: just for now check for ships only.
     ?.  (~(has in fleet-all) [%ship src.bol]) :: check that ship requesting card is a valid recipient.
       ~&  "[on-watch]: Request from {<src.bol>} denied, not a valid recipient."
       !!  :: crash - request denied, not a valid recipient
@@ -507,14 +520,6 @@
 
   :: Decode document content properties so that we can add in recipients
   =/  decoded-properties  ((om sa) properties.the-feature)
-
-::ASM - remove
-::  :: Reduce the recipients down to a simple list of planet names as tapes  
-::  =/  skimmed-recipients  `(list recipient)`(skim recipients-list |=(a=recipient =(-.a %ship)))
-::  =/  ship-list-p  `(list @p)`(turn skimmed-recipients |=(a=recipient ?-(-.a %ship +.a, %group +<.a)))
-::  =/  ship-list-t  `(list tape)`(turn ship-list-p |=(a=@p (scow %p a)))
-::  =/  insert-list  `tape`(reel ship-list-t |=([b=tape c=tape] ?:(=(c "") (weld b c) (weld b (weld "," c)))))
-::------------
 
 :: Reduce recipients down to a simple tape, of both ships & groups
   =/  recipient-tape  `(list tape)`(turn recipients-list |=(a=recipient ?-(-.a %ship (scow %p +.a), %group (weld (scow %p +<.a) +>.a))))
