@@ -1,12 +1,12 @@
 /-  geo
-|_  act=action:geo
+|_  =update:geo
 ++  grab
   |%
-  ++  noun  action:geo
+  ++  noun  update:geo
   --
 ++  grow
   |%
-  ++  noun  act
+  ++  noun  update
   --
 ++  grad  %noun
 --

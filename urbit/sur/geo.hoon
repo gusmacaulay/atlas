@@ -142,7 +142,6 @@
 +$  action
   $%  [%delete id]
       [%pleasant ~]
-      [%update update]
       [%share json]
       [%accept json]
       [%geojson json]
@@ -156,12 +155,19 @@
 +$  create
   $:  geojson=json
   ==
-+$  update
-  $:  =id
-      geojson=json
-  ==
 +$  share
   $:  =id
       pals=(list @p)
+  ==
+::
+::
++$  update
+  $%  [%change change]
+      [%delete =path]
+  ==
+
++$  change
+  $:  =id
+      geojson=json
   ==
 --
