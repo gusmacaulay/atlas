@@ -196,12 +196,22 @@
       %0  `this(state 1+[[nextid.store.old (~(urn by documents.store.old) |=([key=@ud value=document.geo-zero] [id.value content.value ~]))] dogalog.old])
     ==
 ++  on-leave  on-leave:def
-++  on-peek  ::on-peek:def
+++  on-peek
   |=  pax=path
   ^-  (unit (unit cage))
-  ?~  (find "fridge" (trip (snag 1 pax)))  :: Check if it's a fridge peek.
-    ``json+!>((fetch-dogalog pax))
-    ``json+!>((fetch-document `path`(slag 1 pax)))  :: pax is `path`~['x' 'fridge' '0'], use the /fridge/0 portion of the address
+::  ~&  "[on-peek] path is: {<+<.pax>}"
+  ::  pax is /x/fridge/1 or /x/dogalog or /x/imagelink
+  ?+  pax  (on-peek:def pax)
+    [%x %dogalog ~]  ``json+!>((fetch-dogalog pax))
+    [%x %fridge @ ~]  ``json+!>((fetch-document `path`['fridge' i.t.t.pax ~]))  :: pass /fridge/0 portion of path
+::    [%x %imagelink @ ~]  ``json+!>((fetch-document-image i.t.t.pax))
+::    [%x %imagelink @ ~]  ``tape+!>((fetch-document-image `path`['fridge' i.t.t.pax ~]))
+    [%x %imagelink @ ~]  ``tape+!>((fetch-document-image `path`['fridge' i.t.t.pax ~]))
+::    [%x %imagelink @ ~]  ``tape+!>("well this is interesting...")
+  ==
+::  ?~  (find "fridge" (trip (snag 1 pax)))  :: Check if it's a fridge peek.
+::    ``json+!>((fetch-dogalog pax))
+::    ``json+!>((fetch-document `path`(slag 1 pax)))  :: pax is `path`~['x' 'fridge' '0'], use the /fridge/0 portion of the address
 ::
 ++  on-fail   on-fail:def
 --
@@ -210,6 +220,39 @@
 ::
 |_  bol=bowl:gall
 ::
+::
+::ASM
+:: Grab just the image from the document
+++  fetch-document-image
+  |=  =path
+  ^-  tape
+::  ^-  @t
+  =/  idpath  (snag 1 path)
+  =/  id  (slav %ud idpath)
+  ~&  "id is: {<id>}"
+
+  :: it's a base64 image that may be a png, jpg or gif.  Return as text and see what the browser does with it.
+
+::    =/  groups  `(map @t (map @t @da))`((om (ot ~[fleet+(om (ot ~[joined+di]))])) jsn)
+
+  :: have to decode the JSON that's held internally.  The image is part of the properties of the GeoJSON
+  ?:  ?=(~(has by documents.store) id) :: check we have the document
+    =/  document  (~(got by documents.store) id)
+    =/  geocontent  +3.content.document
+    =/  the-feature  (feature geocontent)
+    :: decode the JSON to get the image as a tape/text
+    =/  decoded-properties  ((om sa) properties.the-feature)
+    =/  image-txt  `tape`(~(got by decoded-properties) 'image')
+::    =/  image-txt  (crip (~(got by decoded-properties) 'image'))
+
+    :: it's an object of pairs, we want "image: <txt>"
+::    =/  image-txt  `tape`(ot ~[image+sa] properties.the-feature) 
+::    =/  image-txt  `@t`(ot ~[image+so] properties.the-feature) 
+    ~&  "image text is: {<image-txt>}"
+    image-txt
+  ~&  "couldn't find an image!"
+  "~"
+::   '~'
 ::
 :: Grab the geojson document specified by id in path eg. /fridge/0
 ++  fetch-document
@@ -511,7 +554,7 @@
   ^-  json
   =/  geocontent  +3.content.document
   =/  ctype  +2.content.document
-
+::ASM tag
   :: if it's a feature, *add* recipients.document to properties.geocontent (feature)
   :: so that we can return it to the front-end.
 
