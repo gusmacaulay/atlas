@@ -195,23 +195,17 @@
       %1  `this(state old)
       %0  `this(state 1+[[nextid.store.old (~(urn by documents.store.old) |=([key=@ud value=document.geo-zero] [id.value content.value ~]))] dogalog.old])
     ==
+::
 ++  on-leave  on-leave:def
 ++  on-peek
   |=  pax=path
   ^-  (unit (unit cage))
-::  ~&  "[on-peek] path is: {<+<.pax>}"
   ::  pax is /x/fridge/1 or /x/dogalog or /x/imagelink
   ?+  pax  (on-peek:def pax)
     [%x %dogalog ~]  ``json+!>((fetch-dogalog pax))
     [%x %fridge @ ~]  ``json+!>((fetch-document `path`['fridge' i.t.t.pax ~]))  :: pass /fridge/0 portion of path
-::    [%x %imagelink @ ~]  ``tape+!>((fetch-document-image `path`['fridge' i.t.t.pax ~])) ::returns base64 as text, notes sees something else!!??
-::    [%x %imagelink @ ~]  ``txt+!>((fetch-document-image `path`['fridge' i.t.t.pax ~]))  ::returns base64 as text in a column, all there, but unreadable.
-    [%x %imagelink @ ~]  ``mime+!>((fetch-document-image `path`['fridge' i.t.t.pax ~]))  ::returns base64 as text in a column, all there, but unreadable.
-::    [%x %imagelink @ ~]  ``tape+!>("well this is interesting...")
+    [%x %imagelink @ %atlas %fridge @ ~]  ``mime+!>((fetch-document-image pax))
   ==
-::  ?~  (find "fridge" (trip (snag 1 pax)))  :: Check if it's a fridge peek.
-::    ``json+!>((fetch-dogalog pax))
-::    ``json+!>((fetch-document `path`(slag 1 pax)))  :: pax is `path`~['x' 'fridge' '0'], use the /fridge/0 portion of the address
 ::
 ++  on-fail   on-fail:def
 --
@@ -220,160 +214,42 @@
 ::
 |_  bol=bowl:gall
 ::
-::ASM
+::
+:: Grab just the image from the document
+++  fetch-document-image
+  |=  =path
+  ^-  mime
+  =/  key  +>.path  ::/<~shp>/atlas/fridge/<id>
+
+  ?.  (~(has by entries.dogalog) key)  :: check we have the document in the dogalog
+    ~&  "[%atlas] Go fish (I don't have that card)"
+    *mime
+  =/  entry  (~(got by entries.dogalog) key)
+  =/  document  (~(got by documents.store) (need fridge-id.entry))
+
+  :: have to decode the JSON that's held internally.  The image is part of the properties of the GeoJSON
+  =/  geocontent  +3.content.document
+  =/  the-feature  (feature geocontent)
+  =/  decoded-properties  ((om sa) properties.the-feature)   :: decode the JSON to get the image as a tape/text
+  =/  image-txt  `tape`(~(got by decoded-properties) 'image')
+  =/  image-mime  (base64-to-binary image-txt)
+  image-mime
+::
 ::
 ++  base64-to-binary
   |=  tape64=tape
-  ^-  mime ::binary format
-  =/  base64index  `(list @t)`['A' 'B' 'C' 'D' 'E' 'F' 'G' 'H' 'I' 'J' 'K' 'L' 'M' 'N' 'O' 'P' 'Q' 'R' 'S' 'T' 'U' 'V' 'W' 'X' 'Y' 'Z' 'a' 'b' 'c' 'd' 'e' 'f' 'g' 'h' 'i' 'j' 'k' 'l' 'm' 'n' 'o' 'p' 'q' 'r' 's' 't' 'u' 'v' 'w' 'x' 'y' 'z' '0' '1' '2' '3' '4' '5' '6' '7' '8' '9' '+' '/' ~]
-
-  ::  Remove "data:image/jpeg;base64," off the start, as we'll be returning just the binary.
-::  =/  base64  `tape`(slag +((need (find "," tape64))) tape64)
-::  ~&  "Data dump: base64 image>>    {<(crip base64)>}" :: base64 is valid & correct
-::  =/  base63  `tape`(snip base64)  ::removed empty bytes at end.  Algorithm should *ignore* all non base64index characters (such as =)
-::  ~&  "Data dump: base 64, last byte removed: {<(crip base63)>}"
-::  =/  mime-bits  q:(spin base63 0b0 |=([a=@t b=@ub] [a (cat 3 `@ub`(need (find [a]~ base64index)) b)]))
-::  =/  mime-lent  (met 4 mime-bits) 
-
-:: **** bit-width of 8 bits, = block size of 3 (2^3 = 8), 8 bits = 8 binary digits = 2 hex digits
-::  =/  hex-bits  q:(spin base63 0x0 |=([a=@t b=@ux] [a (cat 3 `@ux`(need (find [a]~ base64index)) b)]))
-::  =/  hex-lent  (met 3 hex-bits)
-::  ~&  "file in hex is: {<hex-bits>}"
-
-:::----- try again from scratch
-:: remove header
-  =/  base64  `tape`(slag +((need (find "," tape64))) tape64)
-:: remove empty bites at end (temporary, removal of zeroes needs to be done properly!!****)
-:: '=' at the end of the file marks is as base64 apparently (still needs to go)
-  =/  base63  `tape`(snip base64)  ::removed empty bytes at end.  Algorithm should *ignore* all non base64index characters (such as =)
-::~&  "base63: {<(crip base63)>}"
-:: create tape/string of decimal indices of base64
-  =/  dec-64  (turn base63 |=(a=@t `@ud`(need (find [a]~ base64index))))  ::correct!  Creates a list like: [16 21 33 ~]
-::~&  "dec-64 - list of base64 indices is: {<dec-64>}"
-  =/  bin-64  (turn dec-64 |=(a=@ud `@ub`a))  :: creates a list of 8bit binary numbers (from 0 - 63) [11.0011 1111.0011 1001.0110 ~]
-::~&  "bin-64 - list of base64 indices in untrimmed binary is: {<bin-64>}"
-:: concatenate in 6bit blocks (3 steps of 2 bits)
-  =/  six-bit  (turn bin-64 |=(a=@ub `@ub`(end [1 3] a)))  ::3 steps of 1bit each, discarding the leading 00
-::~&  "six-bit - binary in 6 bit blocks: {<six-bit>}"
-:: create a single binary string by concatenating the six bit blocks
-  =/  six-string  `@ub`(rep [1 3] (flop six-bit))  ::concatenate 6bit bytes into single byte-string
-
-::How many whole 8bit bytes does the string have?  We should take that many bytes, and discard the remainder.
-  =/  string-bytes  `@u`(met 3 six-string)  :: how many 8bit bytes  ** not so, this is, "how many bytes does it take to contain this number"
-  =/  string-bits  `@u`(met 0 six-string)
-  =/  diff  `@u`(sub (mul string-bytes 8) string-bits)
-  =/  bits-to-trim  `@u`(sub 8 diff)
-  =/  true-length  `@u`(sub string-bits bits-to-trim)
-  ~&  "string-bytes {<(mul string-bytes 8)>}, string-bits {<string-bits>}, to remove: {<bits-to-trim>}, true-length: {<true-length>}"
-  ::trim to correct number of *bits* (from LHS of six-string), there may be a more efficient way to do this?
-  =/  trimmed-string  `@ub`(cut 0 [bits-to-trim true-length] six-string)
-  =/  hex-trim  `(list @ux)`(flop (rip 3 trimmed-string))
-  ~&  "for comparison: hex-trim: {<hex-trim>})"
-
-  :: When run through the Hex -> base64 then base64 -> Image converters, this produces the correct image.
-  :: it's still not returning properly, which is presumably due to `mime` type stuff.
-
-
-::~&  "six-string - binary of all bits {<six-string>}"
-:: pull the binary string apart again, in eight bit blocks, as ASCII characters
-:: if the last group has less than 8 characters, you must discard it - this is probably why we get "rep: stub" in six-string above.
-:: rep: stub doesn't discard the stub unfortunately, so we'll have to do it ourselves
-  =/  eight-bit  `tape`(flop (rip 3 six-string))
-::~&  "eight-bit - ASCII 8bit file: {<eight-bit>}"
-  =/  hex-bits  `(list @ux)`(flop (rip 3 six-string))
-~&  "for comparison: hex: {<hex-bits>})"
-:: now, not sure what to return, the binary string (which may be pulled apart into 8bit blocks by default,
-:: or the tape, or something else!
-:: can't return a tape in mime, try the string of binary
-
-::  =/  mime-lent  (met 3 six-string)  :: number of 8bit bytes in the file.
-::  `mime`[/image/jpeg [mime-lent six-string]]
-
-:: may need to pad/remove, to a multiple of 4 in order to get the file right!
-::  `mime`[/image/jpeg [mime-lent eight-bit]]  :: can't return a tape
-
-:::------------------------------
-
-  `mime`[/image/jpeg [(sub string-bytes 1) trimmed-string]]
-
-
-
-:: Which byte first though??  Append in the other order...
-::  =/  mime-bits  q:(spin base64 0b0 |=([a=@t b=@ub] [a (cat 3 b `@ub`(need (find [a]~ base64index)))]))
-::  =/  mime-lent  (met 4 mime-bits) 
-
-::try it as 1 & 2 rather than 3 & 4, still not sure on these.
-::  =/  mime-bits  q:(spin base64 0b0 |=([a=@t b=@ub] [a (cat 1 `@ub`(need (find [a]~ base64index)) b)]))
-::  =/  mime-lent  (met 3 mime-bits) 
-
-::  ~&  "file binary is: {<mime-bits>}"
-::  ~&  "file is {<mime-lent>} bytes long?"
-:: --------------------
-::  :: step through base64 element by element
-::     :: for each element use table/list to get the base64 index
-::     :: use `@ub`index to get the binary value for the base64 index
-::        :: this needs to be a *tape* of individual numbers so we can pull it apart later "1001010011", etc.
-::     :: push this to the end of the temporary tape
-::  :: or...
-::  :: use bit functions, "cat" to concatenate the binary values setting each bit to the right length
-
-  :: step through the binary tape created above in 8 digit blocks
-     :: take the 8 digits as a binary number
-     :: use `@t` to convert to a cord - actually this doesn't work because @t is 128 bit, and the binary should be 256 bits!
-:: -------------------
-
-:: not sure that as-octs:mimes:html is expecting!!
-:: however mime seems to take the binary string ???, so just:
-
-::    `mime`[~ [0 0x0]]
-
-::  `mime`[~ [mime-lent mime-bits]]
-::  `mime`[/image/jpeg [mime-lent mime-bits]]
-::  `mime`[/image/jpeg [hex-lent hex-bits]]
-::  `mime`[/image/jpeg (as-octs:mimes:html mime-bits)]  :: from %groups/sur/png.hoon this drops in the header for the file, 
-                                                        :: so the browser knows what it is.  Still have incorrect data though.
-::
-::
-::ASM
-:: Grab just the image from the document
-++  fetch-document-image
-:: ASM *****************
-::
-::   NEED TO ADD sending off ACCEPT if card not found
-::   actually this is only looking using the local id
-::   it needs to search for the full id /~dur/atlas/fridge/0
-::   find in dogalog -> get fridge-id -> get data
-::
-:: *********************
-  |=  =path
   ^-  mime
-::  ^-  tape
-::  ^-  @t
-  =/  idpath  (snag 1 path)
-  =/  id  (slav %ud idpath)
-  ~&  "id is: {<id>}"
 
-  :: it's a base64 image that may be a png, jpg or gif.  Return as text and see what the browser does with it.
+  :: remove header 9header is 'data:image/gif;base64,')
+  =/  base64  `tape`(slag +((need (find "," tape64))) tape64)
 
-::    =/  groups  `(map @t (map @t @da))`((om (ot ~[fleet+(om (ot ~[joined+di]))])) jsn)
+  :: check header for image type
+  =/  image-type  `tape`(slag +((need (find ":" tape64))) (scag (need (find ";" tape64)) tape64))
 
-  :: have to decode the JSON that's held internally.  The image is part of the properties of the GeoJSON
-  ?:  ?=(~(has by documents.store) id) :: check we have the document
-    =/  document  (~(got by documents.store) id)
-    =/  geocontent  +3.content.document
-    =/  the-feature  (feature geocontent)
-    :: decode the JSON to get the image as a tape/text
-    =/  decoded-properties  ((om sa) properties.the-feature)
-    =/  image-txt  `tape`(~(got by decoded-properties) 'image') :: ** this returns the base64 image in text format.  Browser doesn't seem to know what to do
-::    =/  image-txt  (crip (~(got by decoded-properties) 'image'))
-    =/  image-mime  (base64-to-binary image-txt)
-::    ~&  "image text is: {<image-txt>}"
-::    image-txt
-    image-mime
-  ~&  "couldn't find an image!"
-  *mime
-::  "~"
-::   '~'
+  ::  from sys/zuse.hoon +de:base64: decode base64 cord to (unit @)
+  =/  eight-bit  (need (de:base64:mimes:html (crip base64)))
+  `mime`[image-type eight-bit]
+::
 ::
 :: Grab the geojson document specified by id in path eg. /fridge/0
 ++  fetch-document
@@ -675,7 +551,6 @@
   ^-  json
   =/  geocontent  +3.content.document
   =/  ctype  +2.content.document
-::ASM tag
   :: if it's a feature, *add* recipients.document to properties.geocontent (feature)
   :: so that we can return it to the front-end.
 
@@ -685,7 +560,7 @@
   :: Decode document content properties so that we can add in recipients
   =/  decoded-properties  ((om sa) properties.the-feature)
 
-:: Reduce recipients down to a simple tape, of both ships & groups
+  :: Reduce recipients down to a simple tape, of both ships & groups
   =/  recipient-tape  `(list tape)`(turn recipients-list |=(a=recipient ?-(-.a %ship (scow %p +.a), %group (weld (scow %p +<.a) +>.a))))
   :: comma separated list as a tape
   =/  insert-list  `tape`(reel recipient-tape |=([b=tape c=tape] ?:(=(c "") (weld b c) (weld b (weld "," c))))) 
@@ -704,7 +579,6 @@
   (geojson-featurecollection (featurecollection geocontent))
     %feature
   (geojson-feature new-geocontent)
-::  (geojson-feature (feature geocontent))
     %geometry
   (geojson-geometry (geometry geocontent))
     %geometrycollection
