@@ -195,13 +195,17 @@
       %1  `this(state old)
       %0  `this(state 1+[[nextid.store.old (~(urn by documents.store.old) |=([key=@ud value=document.geo-zero] [id.value content.value ~]))] dogalog.old])
     ==
+::
 ++  on-leave  on-leave:def
 ++  on-peek  ::on-peek:def
   |=  pax=path
   ^-  (unit (unit cage))
-  ?~  (find "fridge" (trip (snag 1 pax)))  :: Check if it's a fridge peek.
-    ``json+!>((fetch-dogalog pax))
-    ``json+!>((fetch-document `path`(slag 1 pax)))  :: pax is `path`~['x' 'fridge' '0'], use the /fridge/0 portion of the address
+  ::  pax is /x/fridge/1 or /x/dogalog or /x/imagelink
+  ?+  pax  (on-peek:def pax)
+    [%x %dogalog ~]  ``json+!>((fetch-dogalog pax))
+    [%x %fridge @ ~]  ``json+!>((fetch-document `path`['fridge' i.t.t.pax ~]))  :: pass /fridge/0 portion of path
+    [%x %imagelink @ %atlas %fridge @ ~]  ``mime+!>((fetch-document-image pax))
+  ==
 ::
 ++  on-fail   on-fail:def
 --
@@ -209,6 +213,42 @@
 ::
 ::
 |_  bol=bowl:gall
+::
+::
+:: Grab just the image from the document
+++  fetch-document-image
+  |=  =path
+  ^-  mime
+  =/  key  +>.path  ::/<~shp>/atlas/fridge/<id>
+
+  ?.  (~(has by entries.dogalog) key)  :: check we have the document in the dogalog
+    ~&  "[%atlas] Go fish (I don't have that card)"
+    *mime
+  =/  entry  (~(got by entries.dogalog) key)
+  =/  document  (~(got by documents.store) (need fridge-id.entry))
+
+  :: have to decode the JSON that's held internally.  The image is part of the properties of the GeoJSON
+  =/  geocontent  +3.content.document
+  =/  the-feature  (feature geocontent)
+  =/  decoded-properties  ((om sa) properties.the-feature)   :: decode the JSON to get the image as a tape/text
+  =/  image-txt  `tape`(~(got by decoded-properties) 'image')
+  =/  image-mime  (base64-to-binary image-txt)
+  image-mime
+::
+::
+++  base64-to-binary
+  |=  tape64=tape
+  ^-  mime
+
+  :: remove header 9header is 'data:image/gif;base64,')
+  =/  base64  `tape`(slag +((need (find "," tape64))) tape64)
+
+  :: check header for image type
+  =/  image-type  `tape`(slag +((need (find ":" tape64))) (scag (need (find ";" tape64)) tape64))
+
+  ::  from sys/zuse.hoon +de:base64: decode base64 cord to (unit @)
+  =/  eight-bit  (need (de:base64:mimes:html (crip base64)))
+  `mime`[image-type eight-bit]
 ::
 ::
 :: Grab the geojson document specified by id in path eg. /fridge/0
@@ -521,7 +561,7 @@
   :: Decode document content properties so that we can add in recipients
   =/  decoded-properties  ((om sa) properties.the-feature)
 
-:: Reduce recipients down to a simple tape, of both ships & groups
+  :: Reduce recipients down to a simple tape, of both ships & groups
   =/  recipient-tape  `(list tape)`(turn recipients-list |=(a=recipient ?-(-.a %ship (scow %p +.a), %group (weld (scow %p +<.a) +>.a))))
   :: comma separated list as a tape
   =/  insert-list  `tape`(reel recipient-tape |=([b=tape c=tape] ?:(=(c "") (weld b c) (weld b (weld "," c))))) 
@@ -540,7 +580,6 @@
   (geojson-featurecollection (featurecollection geocontent))
     %feature
   (geojson-feature new-geocontent)
-::  (geojson-feature (feature geocontent))
     %geometry
   (geojson-geometry (geometry geocontent))
     %geometrycollection
