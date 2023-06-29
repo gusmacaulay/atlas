@@ -1,5 +1,5 @@
-Atlas
-=====
+Atlas/Poast
+===========
 
 *A spatial document store for urbit*
 
@@ -28,30 +28,4 @@ Atlas comes with some simple generators for ingesting geojson and printing.  Gra
 ```
 Full set of examples in tests.md, with ready to go cut and paste examples.
 
-### Install urlayers
-
-urlayers is a standalone web app built from TBCS create-urbit-app (https://github.com/tylershuster/cra-template-urbit).  
-Use yarn to build and start.  Currently hardcoded to attach to a fakezod.  You will need to run ```|cors-approve 'http://localhost:3000'``` on your fakezod.  You will need to modify line 80 of /urlayers-standalone/src/OLMapFragment.js to point to the correct port of your fakezod (sorry).
-
-```
-$cd urlayers-standalone
-$yarn install
-$yarn start
-open localhost:3000 in browser
-```
-
-### Using urlayers
-
-draw on map. press 'D' button to delete. reload page to verify persistence. wow.
-
-### Caveats/Bugs/TODO
-
-* Needs a big refactor/tidy up
- * All the geojson stuff is in atlas.hoon, should be in a library
- * The CRUD stuff is complete but muddled, updates only work with features, the geojson parsing is intertwined with the create
- * Some other TODO in the code.
-* urlayers is hardcoded to document 0, you can change it in the code to a different document id and it works - but only if you open a new private tab or clear cache etc. (subscription memoisation causing this maybe?)
-* urlayers refreshes the subscription whenever there is an openlayers event such as zoom or pan, should be the subscription refreshing openlayers but never go to the bottom of this
-* urlayers is hardcoded to attach to fakezod
-* should add a few things to urlayers, such as zoom to extent of features on load, specify a document id in the UI, allow feature edit
-* CRUD operations should be all under one gall json poke
+### Install Poast
