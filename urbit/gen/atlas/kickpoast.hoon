@@ -3,5 +3,7 @@
 :-  %say
 |=  [* [poast=@t ~] ~]
 ::~&  gj
-=/  poast  (need (de-json:html poast))
+::=/  poast  (need (de-json:html poast))
+:: ASM
+=/  poast  (need (de:json:html poast))
 [%unsubscribe poast]

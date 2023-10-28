@@ -4,5 +4,7 @@
 :-  %say
 |=  [* [gj=@t ~] ~]
 ::~&  gj
-=/  geojson  (need (de-json:html gj))
+::=/  geojson  (need (de-json:html gj))
+::ASM
+=/  geojson  (need (de:json:html gj))
 [%geojson geojson]

@@ -4,5 +4,7 @@
 /-  *geo
 :-  %say
 |=  [* [oj=@t ~] ~]
-=/  target  (need (de-json:html oj))
+::=/  target  (need (de-json:html oj))
+:: ASM
+=/  target  (need (de:json:html oj))
 [%delete target]

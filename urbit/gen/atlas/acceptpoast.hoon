@@ -3,5 +3,7 @@
 :-  %say
 |=  [* [accept=@t ~] ~]
 ::~&  gj
-=/  accept  (need (de-json:html accept))
+::=/  accept  (need (de-json:html accept))
+:: ASM
+=/  accept  (need (de:json:html accept))
 [%accept accept]
